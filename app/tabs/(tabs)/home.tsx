@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { Pressable, View } from "react-native";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   // For demo purposes - in real app, this would come from auth context
@@ -49,6 +50,7 @@ export default function HomeScreen() {
   const handleLoginPress = useCallback(() => {
     // Handle login navigation - will be implemented later
     console.log("Login pressed");
+    router.push("/(auth)/login");
   }, []);
 
   const handleProfilePress = useCallback(() => {
