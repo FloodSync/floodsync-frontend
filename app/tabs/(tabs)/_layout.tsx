@@ -1,36 +1,56 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import React from "react";
+import { Tabs } from "expo-router";
+import { MapPin, Home, Bell } from "lucide-react-native";
 
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={18} style={{ marginBottom: -3 }} {...props} />;
+function TabBarIcon({ Icon, color }: { Icon: any; color: string }) {
+  return <Icon size={24} color={color} />;
 }
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        headerShown: false,
+        tabBarActiveTintColor: "#3B82F6",
+        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarShowLabel: true,
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#E5E7EB",
+          height: 70,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+          marginTop: 4,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
+        },
       }}
     >
       <Tabs.Screen
-        name="tab1"
+        name="map"
         options={{
-          title: 'Tab 1',
-          tabBarIcon: ({ color }) => <TabBarIcon name="star-o" color={color} />,
+          title: "Map",
+          tabBarIcon: ({ color }) => <TabBarIcon Icon={MapPin} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="tab2"
+        name="home"
         options={{
-          title: 'Tab 2',
-          tabBarIcon: ({ color }) => <TabBarIcon name="star-o" color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color }) => <TabBarIcon Icon={Home} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="noti"
+        options={{
+          title: "Noti",
+          tabBarIcon: ({ color }) => <TabBarIcon Icon={Bell} color={color} />,
         }}
       />
     </Tabs>

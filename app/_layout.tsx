@@ -1,66 +1,71 @@
-import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-import '@/global.css';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+// Import NativeWind setup FIRST - before any other imports
+import "@/nativewind-setup";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import "@/global.css";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Slot, usePathname } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { Fab, FabIcon } from '@/components/ui/fab';
-import { MoonIcon, SunIcon } from '@/components/ui/icon';
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+import { Slot } from "expo-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query-client";
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
-} from 'expo-router';
+} from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
+  const [stylesReady, setStylesReady] = useState(false);
 
-  const [styleLoaded, setStyleLoaded] = useState(false);
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    requestAnimationFrame(() => {
+      // Additional small delay to ensure NativeWind styles are fully processed
+      setTimeout(() => {
+        setStylesReady(true);
+      }, 50);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (loaded && stylesReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, stylesReady]);
+
+  // Don't render until fonts and styles are ready
+  if (!loaded || !stylesReady) {
+    return null;
+  }
+
   return <RootLayoutNav />;
 }
 
 function RootLayoutNav() {
-  const pathname = usePathname();
-  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+  const [colorMode] = useState<"light" | "dark">("light");
 
   return (
     <GluestackUIProvider mode={colorMode}>
-      <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
-        <Slot />
-        {pathname === '/' && (
-          <Fab
-            onPress={() =>
-              setColorMode(colorMode === 'dark' ? 'light' : 'dark')
-            }
-            className="m-6"
-            size="lg"
-          >
-            <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
-          </Fab>
-        )}
+      <ThemeProvider value={colorMode === "dark" ? DarkTheme : DefaultTheme}>
+        <QueryClientProvider client={queryClient}>
+          <Slot />
+        </QueryClientProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );
