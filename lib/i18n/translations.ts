@@ -77,6 +77,13 @@ export const translations = {
 
     // Loading
     loading: "Loading...",
+
+    // Safety Check
+    safetyCheckTitle: "Safety Check",
+    safetyCheckMessage:
+      "Are you safe? Please let us know your current safety status.",
+    safe: "I'm Safe",
+    notSafe: "I'm Not Safe",
   },
   my: {
     // Common
@@ -86,7 +93,7 @@ export const translations = {
     profile: "ကိုယ်ရေးအချက်အလက်",
 
     // Home Screen
-    floodRiskLevel: "ရေလျှံအန္တရာယ်အဆင့်",
+    floodRiskLevel: "ရေကြီးနိုင်ခြေအဆင့်",
     highFloodRiskAlert: "ရေလျှံအန္တရာယ်မြင့်မားသော သတိပေးချက်",
     highFloodRiskMessage:
       "သင့်လက်ရှိတည်နေရာတွင် ရေလျှံအန္တရာယ်မြင့်မားပါသည်။ သတိထားရန် လိုအပ်ပါသည်။",
@@ -156,6 +163,13 @@ export const translations = {
 
     // Loading
     loading: "ဖွင့်နေသည်...",
+
+    // Safety Check
+    safetyCheckTitle: "လုံခြုံမှုစစ်ဆေးခြင်း",
+    safetyCheckMessage:
+      "သင်လုံခြုံပါသလား? သင့်လက်ရှိလုံခြုံမှုအခြေအနေကို ကျွန်ုပ်တို့အား အကြောင်းကြားပါ။",
+    safe: "လုံခြုံပါသည်",
+    notSafe: "လုံခြုံမှုမရှိပါ",
   },
 };
 

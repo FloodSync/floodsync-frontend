@@ -43,13 +43,11 @@ interface WeatherData {
 }
 
 interface WeatherStatusProps {
-  weather?: WeatherType;
   location?: string;
   data?: Partial<WeatherData>;
 }
 
 const WeatherStatus: React.FC<WeatherStatusProps> = ({
-  weather = "cloudy",
   location = "Current Location",
   data,
 }) => {

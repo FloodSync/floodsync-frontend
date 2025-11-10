@@ -18,6 +18,7 @@ import { Pressable, View } from "react-native";
 import { router } from "expo-router";
 import WeatherStatus from "@/components/wather-status";
 import PrecipitationAnalysis from "@/components/precipitation-analysis";
+import FloodSafetyCheck from "@/components/flood-safety-check";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
@@ -39,19 +40,6 @@ export default function HomeScreen() {
     return "#EF4444"; // Red
   };
 
-  const getWeatherIcon = (type: string) => {
-    switch (type) {
-      case "cloudy":
-        return <Cloud size={32} color="#6B7280" />;
-      case "rainy":
-        return <CloudRain size={32} color="#3B82F6" />;
-      case "sunny":
-        return <Sun size={32} color="#F59E0B" />;
-      default:
-        return <Cloud size={32} color="#6B7280" />;
-    }
-  };
-
   const handleLoginPress = useCallback(() => {
     // Handle login navigation - will be implemented later
     console.log("Login pressed");
@@ -61,6 +49,11 @@ export default function HomeScreen() {
   const handleProfilePress = useCallback(() => {
     // Handle profile navigation - will be implemented later
     console.log("Profile pressed");
+  }, []);
+
+  const handleSafetyResponse = useCallback((isSafe: boolean) => {
+    console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
+    // You can add additional logic here if needed
   }, []);
 
   return (
@@ -128,6 +121,12 @@ export default function HomeScreen() {
             />
           </Box>
         </Box>
+        {/* Safety Check Notification - appears after successful API call when risk > 80 */}
+        <FloodSafetyCheck
+          floodRisk={floodRisk}
+          location={userLocation}
+          onResponseSubmitted={handleSafetyResponse}
+        />
         {/* Alert Messages (if needed) */}
         {floodRisk >= 70 && (
           <Box className="mx-4 mb-2  bg-orange-100 border-l-4 border-orange-500 rounded-lg p-4">
@@ -153,7 +152,6 @@ export default function HomeScreen() {
 
         <Box className="bg-white px-4 mx-4 mt-2 rounded-xl py-4">
           <WeatherStatus
-            weather={weatherData.today as "sunny" | "cloudy" | "rainy"}
             location={userLocation}
             data={{
               temperature: 28,
