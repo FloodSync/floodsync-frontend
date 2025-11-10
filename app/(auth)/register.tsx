@@ -1,10 +1,20 @@
 import React, { useState, useCallback } from "react";
-import { SafeAreaView, Text, TextInput, TouchableOpacity, ScrollView, Pressable } from "react-native";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useRegister } from "@/hooks/use-auth";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -14,6 +24,7 @@ const Register = () => {
   const [city, setCity] = useState("");
   const [township, setTownship] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const registerMutation = useRegister();
 
   const cities = [
     { key: "1", value: "Yangon" },
@@ -47,12 +58,60 @@ const Register = () => {
 
   // Filter townships based on selected city
   const filteredTownships = city
-    ? townships.filter(township => township.cityId === city)
+    ? townships.filter((township) => township.cityId === city)
     : townships;
 
-  const handleRegister = () => {
-    console.log({ name, email, password, phone, city, township });
+  const getCityName = (cityKey: string) => {
+    return cities.find((c) => c.key === cityKey)?.value || "";
   };
+
+  const getTownshipName = (townshipKey: string) => {
+    return townships.find((t) => t.key === townshipKey)?.value || "";
+  };
+
+  const handleRegister = () => {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !phone.trim() ||
+      !city ||
+      !township
+    ) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    const cityName = getCityName(city);
+    const townshipName = getTownshipName(township);
+
+    console.log("data", {
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      phone: phone.trim(),
+      city: cityName,
+      township: townshipName,
+    });
+
+    registerMutation.mutate({
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      phone: phone.trim(),
+      city: cityName,
+      township: townshipName,
+    });
+  };
+
+  React.useEffect(() => {
+    if (registerMutation.isError) {
+      Alert.alert(
+        "Registration Failed",
+        registerMutation.error?.message || "Failed to register"
+      );
+    }
+  }, [registerMutation.isError, registerMutation.error]);
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
@@ -136,11 +195,17 @@ const Register = () => {
 
         <TouchableOpacity
           onPress={handleRegister}
+          disabled={registerMutation.isPending}
           className="bg-blue-600 p-4 rounded-2xl"
+          style={{ opacity: registerMutation.isPending ? 0.6 : 1 }}
         >
-          <Text className="text-white text-center font-semibold text-lg">
-            Register
-          </Text>
+          {registerMutation.isPending ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white text-center font-semibold text-lg">
+              Register
+            </Text>
+          )}
         </TouchableOpacity>
 
         <Text className="text-gray-600 text-center mt-4">

@@ -21,12 +21,16 @@ import PrecipitationAnalysis from "@/components/precipitation-analysis";
 import FloodSafetyCheck from "@/components/flood-safety-check";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useAuthStore } from "@/stores/auth-store";
+import { useLogout } from "@/hooks/use-auth";
 
 export default function HomeScreen() {
   const { t } = useLanguage();
-  // For demo purposes - in real app, this would come from auth context
-  const [isLoggedIn] = useState(false); // Change to true to see profile view
-  const [userLocation] = useState("Yangon, Myanmar");
+  const { user, isAuthenticated } = useAuthStore();
+  const logoutMutation = useLogout();
+  const userLocation = user
+    ? `${user.city}, ${user.township}`
+    : "Yangon, Myanmar";
   const [floodRisk] = useState(90); // Percentage (0-100)
   const [weatherData] = useState({
     today: "sunny",
@@ -47,9 +51,8 @@ export default function HomeScreen() {
   }, []);
 
   const handleProfilePress = useCallback(() => {
-    // Handle profile navigation - will be implemented later
-    console.log("Profile pressed");
-  }, []);
+    logoutMutation.mutate();
+  }, [logoutMutation]);
 
   const handleSafetyResponse = useCallback((isSafe: boolean) => {
     console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
@@ -59,23 +62,37 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
       <ScrollView className="flex-1">
-        {/* Location and Profile Header */}
-
         <Box className="bg-white px-4 py-4 border-b border-gray-200">
           <HStack className="items-center justify-between">
-            <HStack space="sm" className="items-center flex-1">
-              <MapPin size={20} color="#3B82F6" />
-              <Text
-                className="text-gray-800 text-base font-medium"
-                style={{ fontFamily: "Z06-Walone-Regular" }}
-              >
-                {userLocation}
-              </Text>
-            </HStack>
+            <VStack className="flex-1">
+              <HStack space="sm" className="items-center">
+                <MapPin size={20} color="#3B82F6" />
+                <Text
+                  className="text-gray-800 text-base font-medium"
+                  style={{ fontFamily: "Z06-Walone-Regular" }}
+                >
+                  {userLocation}
+                </Text>
+              </HStack>
+              {isAuthenticated && user && (
+                <HStack space="xs" className="items-center mt-1">
+                  <User size={14} color="#10B981" />
+                  <Text
+                    className="text-green-600 text-xs font-medium"
+                    style={{ fontFamily: "Z06-Walone-Regular" }}
+                  >
+                    {user.name} • {user.email}
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
             <HStack space="sm" className="items-center">
               <LanguageSwitcher />
-              {isLoggedIn ? (
-                <Pressable onPress={handleProfilePress}>
+              {isAuthenticated ? (
+                <Pressable
+                  onPress={handleProfilePress}
+                  disabled={logoutMutation.isPending}
+                >
                   <View className="bg-blue-100 rounded-full p-2">
                     <User size={20} color="#3B82F6" />
                   </View>

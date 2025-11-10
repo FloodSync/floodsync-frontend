@@ -171,7 +171,6 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
     <AnimatePresence>
       {isVisible && (
         <Motion.View
-          // Push notification style appearance: slides down from top with bounce
           initial={{
             opacity: 0,
             translateY: -100,
@@ -188,7 +187,6 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
             maxHeight: 500,
             marginBottom: 8,
           }}
-          // Discord message style disappearance: slides out to right with fade and collapse
           exit={{
             opacity: 0,
             translateX: 300,
@@ -198,12 +196,11 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
             marginBottom: 0,
           }}
           transition={{
-            // Use spring for enter animation (push notification style)
             type: "spring",
             damping: 18,
             stiffness: 300,
             mass: 0.8,
-            // Override specific properties for smoother exit
+
             opacity: {
               type: "timing",
               duration: 250,

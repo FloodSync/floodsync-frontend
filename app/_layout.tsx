@@ -15,6 +15,7 @@ import { Slot } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { useAuthStore } from "@/stores/auth-store";
 
 export {
   // Catch any errors thrown by the Layout component.

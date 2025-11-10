@@ -1,30 +1,47 @@
 import React, { useState, useCallback } from "react";
 import {
-  SafeAreaView,
   Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
   Pressable,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons"; 
+import { Ionicons } from "@expo/vector-icons";
+import { useLogin } from "@/hooks/use-auth";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const loginMutation = useLogin();
 
   const handleLogin = () => {
-    console.log({ email, password });
-    router.push("/tabs/(tabs)/home");
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    loginMutation.mutate({ email: email.trim(), password });
   };
 
   const handleRegisterPress = useCallback(() => {
     router.push("/(auth)/register");
   }, []);
+
+  React.useEffect(() => {
+    if (loginMutation.isError) {
+      Alert.alert(
+        "Login Failed",
+        loginMutation.error?.message || "Invalid credentials"
+      );
+    }
+  }, [loginMutation.isError, loginMutation.error]);
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
@@ -50,7 +67,7 @@ const Login = () => {
           <TextInput
             className="bg-white p-3 rounded-2xl border border-gray-300 pr-12"
             placeholder="Enter your password"
-            secureTextEntry={!showPassword} 
+            secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
           />
@@ -68,11 +85,17 @@ const Login = () => {
 
         <TouchableOpacity
           onPress={handleLogin}
+          disabled={loginMutation.isPending}
           className="bg-blue-600 p-4 rounded-2xl"
+          style={{ opacity: loginMutation.isPending ? 0.6 : 1 }}
         >
-          <Text className="text-white text-center font-semibold text-lg">
-            Login
-          </Text>
+          {loginMutation.isPending ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white text-center font-semibold text-lg">
+              Login
+            </Text>
+          )}
         </TouchableOpacity>
 
         <Text className="text-gray-600 text-center mt-4">
