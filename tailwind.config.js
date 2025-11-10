@@ -180,6 +180,9 @@ module.exports = {
         code: ['var(--font-source-code-pro)'],
         inter: ['var(--font-inter)'],
         'space-mono': ['var(--font-space-mono)'],
+        'walone': ['Z06-Walone-Regular'],
+        'walone-thin': ['Z06-Walone-Thin'],
+        'walone-bold': ['Z06-Walone-Bold'],
       },
       fontWeight: {
         extrablack: '950',

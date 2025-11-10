@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { Slot } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -25,6 +26,9 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    "Z06-Walone-Thin": require("../assets/fonts/Z06 Walone/Z06-Walone Thin.ttf"),
+    "Z06-Walone-Regular": require("../assets/fonts/Z06 Walone/Z06-Walone Regular.ttf"),
+    "Z06-Walone-Bold": require("../assets/fonts/Z06 Walone/Z06-Walone Bold.ttf"),
     ...FontAwesome.font,
   });
   const [stylesReady, setStylesReady] = useState(false);
@@ -61,12 +65,14 @@ function RootLayoutNav() {
   const [colorMode] = useState<"light" | "dark">("light");
 
   return (
-    <GluestackUIProvider mode={colorMode}>
-      <ThemeProvider value={colorMode === "dark" ? DarkTheme : DefaultTheme}>
-        <QueryClientProvider client={queryClient}>
-          <Slot />
-        </QueryClientProvider>
-      </ThemeProvider>
-    </GluestackUIProvider>
+    <LanguageProvider>
+      <GluestackUIProvider mode={colorMode}>
+        <ThemeProvider value={colorMode === "dark" ? DarkTheme : DefaultTheme}>
+          <QueryClientProvider client={queryClient}>
+            <Slot />
+          </QueryClientProvider>
+        </ThemeProvider>
+      </GluestackUIProvider>
+    </LanguageProvider>
   );
 }
