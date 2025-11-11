@@ -3,7 +3,7 @@ import { HStack } from "./ui/hstack";
 import { VStack } from "./ui/vstack";
 import { Box } from "./ui/box";
 import { Text } from "./ui/text";
-import { AlertCircle, Droplet, TrendingUp } from "lucide-react-native";
+import { AlertCircle, Droplet, TrendingUp, Sun } from "lucide-react-native";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PrecipitationData {
@@ -31,21 +31,22 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  // Mock data - will be replaced with actual data from props
+  if (!precipitation) {
+    return null;
+  }
+
   const precipData: PrecipitationData = {
-    lastHour: precipitation?.lastHour ?? 0.4,
-    last24Hours: precipitation?.last24Hours ?? 2.3,
-    next24HoursForecast: precipitation?.next24HoursForecast ?? 4.5,
+    lastHour: precipitation.lastHour ?? 0,
+    last24Hours: precipitation.last24Hours ?? 0,
+    next24HoursForecast: precipitation.next24HoursForecast ?? 0,
   };
 
   const riskData: FloodRiskData = {
-    riskLevel: floodRisk?.riskLevel ?? "MODERATE",
-    soilSaturation: floodRisk?.soilSaturation ?? 85,
-    riverLevels: floodRisk?.riverLevels ?? "Rising",
-    stormDrains: floodRisk?.stormDrains ?? "Near Capacity",
-    alertMessage:
-      floodRisk?.alertMessage ??
-      "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation.",
+    riskLevel: floodRisk?.riskLevel ?? "LOW",
+    soilSaturation: floodRisk?.soilSaturation ?? 0,
+    riverLevels: floodRisk?.riverLevels ?? "Normal",
+    stormDrains: floodRisk?.stormDrains ?? "Normal",
+    alertMessage: floodRisk?.alertMessage,
   };
 
   const getRiskColor = (risk: string) => {
@@ -63,20 +64,22 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
     }
   };
 
-  const getRainfallIntensity = (inches: number) => {
-    if (inches < 2.5)
+  const getRainfallIntensity = (mm: number) => {
+    // Convert thresholds: 2.5 inches ≈ 63.5 mm, 5 inches ≈ 127 mm
+    if (mm < 63.5)
       return { label: "Light", color: "#D1FAE5", textColor: "#065F46" };
-    if (inches <= 5)
+    if (mm <= 127)
       return { label: "Moderate", color: "#FEF3C7", textColor: "#92400E" };
     return { label: "Heavy", color: "#FCE7F3", textColor: "#9F1239" };
   };
 
   const getMaxPrecipitation = () => {
-    return Math.max(
+    const max = Math.max(
       precipData.lastHour,
       precipData.last24Hours,
       precipData.next24HoursForecast
     );
+    return max > 0 ? max : 1; // Avoid division by zero
   };
 
   const maxPrecip = getMaxPrecipitation();
@@ -113,7 +116,7 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
                 className="text-gray-900 text-base font-bold"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {precipData.lastHour} {t("inches")}
+                {precipData.lastHour} mm
               </Text>
             </HStack>
             <Box className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -139,7 +142,7 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
                 className="text-gray-900 text-base font-bold"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {precipData.last24Hours} {t("inches")}
+                {precipData.last24Hours} mm
               </Text>
             </HStack>
             <Box className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -162,15 +165,23 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
                 {t("next24Hours")}
               </Text>
               <Text
-                className="text-orange-600 text-base font-bold"
+                className={
+                  precipData.next24HoursForecast > 0
+                    ? "text-orange-600 text-base font-bold"
+                    : "text-green-600 text-base font-bold"
+                }
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {precipData.next24HoursForecast} {t("inches")}
+                {precipData.next24HoursForecast} mm
               </Text>
             </HStack>
             <Box className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <Box
-                className="h-full bg-orange-500 rounded-full"
+                className={`h-full rounded-full ${
+                  precipData.next24HoursForecast > 0
+                    ? "bg-orange-500"
+                    : "bg-green-500"
+                }`}
                 style={{
                   width: `${
                     (precipData.next24HoursForecast / maxPrecip) * 100
@@ -178,6 +189,29 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
                 }}
               />
             </Box>
+            {/* Positive message when no rain forecast */}
+            {precipData.next24HoursForecast === 0 && (
+              <Box className="bg-green-50 border-l-4 border-green-500 rounded-lg p-3 mt-2">
+                <HStack space="sm" className="items-center">
+                  <Sun size={20} color="#10B981" />
+                  <VStack className="flex-1">
+                    <Text
+                      className="text-green-800 text-sm font-semibold"
+                      style={{ fontFamily: "Z06-Walone-Bold" }}
+                    >
+                      Clear Weather Ahead
+                    </Text>
+                    <Text
+                      className="text-green-700 text-xs mt-0.5"
+                      style={{ fontFamily: "Z06-Walone-Regular" }}
+                    >
+                      No rain expected in the next 24 hours. Perfect weather for
+                      outdoor activities!
+                    </Text>
+                  </VStack>
+                </HStack>
+              </Box>
+            )}
           </VStack>
         </VStack>
 
@@ -197,7 +231,7 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
               className="text-xs text-center mt-1"
               style={{ color: "#065F46", fontFamily: "Z06-Walone-Regular" }}
             >
-              {t("lessThan")} 2.5 {t("inches")}
+              {t("lessThan")} 63.5 mm
             </Text>
           </Box>
           <Box
@@ -214,7 +248,7 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
               className="text-xs text-center mt-1"
               style={{ color: "#92400E", fontFamily: "Z06-Walone-Regular" }}
             >
-              2.5 {t("to")} 5 {t("inches")}
+              63.5 {t("to")} 127 mm
             </Text>
           </Box>
           <Box
@@ -231,7 +265,7 @@ const PrecipitationAnalysis: React.FC<PrecipitationAnalysisProps> = ({
               className="text-xs text-center mt-1"
               style={{ color: "#9F1239", fontFamily: "Z06-Walone-Regular" }}
             >
-              {t("moreThan")} 5 {t("inches")}
+              {t("moreThan")} 127 mm
             </Text>
           </Box>
         </HStack>

@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useRegister } from "@/hooks/use-auth";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -26,31 +27,6 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const registerMutation = useRegister();
 
-  const cities = [
-    { key: "1", value: "Yangon" },
-    { key: "2", value: "Mandalay" },
-    { key: "3", value: "Naypyidaw" },
-    { key: "4", value: "Bago" },
-    { key: "5", value: "Taunggyi" },
-  ];
-
-  const townships = [
-    { key: "1", value: "Lanmadaw", cityId: "1" },
-    { key: "2", value: "Hlaing", cityId: "1" },
-    { key: "3", value: "Kamayut", cityId: "1" },
-    { key: "4", value: "Mayangone", cityId: "1" },
-    { key: "5", value: "Sanchaung", cityId: "1" },
-    { key: "6", value: "Chanmyathazi", cityId: "2" },
-    { key: "7", value: "Maharaing", cityId: "2" },
-    { key: "8", value: "Chanayethazan", cityId: "2" },
-    { key: "9", value: "Pyigyidagun", cityId: "2" },
-    { key: "10", value: "Amarapura", cityId: "2" },
-    { key: "11", value: "Zabuthiri", cityId: "3" },
-    { key: "12", value: "Pobbathiri", cityId: "3" },
-    { key: "13", value: "Dekkhinathiri", cityId: "3" },
-    { key: "14", value: "Ottarathiri", cityId: "3" },
-  ];
-
   const handleLoginPress = useCallback(() => {
     console.log("Login pressed");
     router.push("/(auth)/login");
@@ -58,16 +34,23 @@ const Register = () => {
 
   // Filter townships based on selected city
   const filteredTownships = city
-    ? townships.filter((township) => township.cityId === city)
-    : townships;
+    ? myanmarTownships.filter((t) => t.cityId === city)
+    : [];
 
   const getCityName = (cityKey: string) => {
-    return cities.find((c) => c.key === cityKey)?.value || "";
+    return myanmarCities.find((c) => c.key === cityKey)?.value || "";
   };
 
   const getTownshipName = (townshipKey: string) => {
-    return townships.find((t) => t.key === townshipKey)?.value || "";
+    return myanmarTownships.find((t) => t.key === townshipKey)?.value || "";
   };
+
+  // Reset township when city changes
+  React.useEffect(() => {
+    if (city) {
+      setTownship("");
+    }
+  }, [city]);
 
   const handleRegister = () => {
     if (
@@ -177,9 +160,12 @@ const Register = () => {
           <Text className="text-gray-700 mb-1">City</Text>
           <SelectList
             setSelected={setCity}
-            data={cities}
-            placeholder="Select City"
+            data={myanmarCities}
+            placeholder="Search or select city..."
+            searchPlaceholder="Search city..."
             boxStyles={{ backgroundColor: "white", borderRadius: 12 }}
+            inputStyles={{ color: "#000" }}
+            dropdownTextStyles={{ color: "#000" }}
           />
         </Box>
 
@@ -187,9 +173,20 @@ const Register = () => {
           <Text className="text-gray-700 mb-1">Township</Text>
           <SelectList
             setSelected={setTownship}
-            data={filteredTownships} // Use filtered townships
-            placeholder="Select Township"
-            boxStyles={{ backgroundColor: "white", borderRadius: 12 }}
+            data={filteredTownships}
+            placeholder={
+              city
+                ? "Search or select township..."
+                : "Please select a city first"
+            }
+            searchPlaceholder="Search township..."
+            boxStyles={{
+              backgroundColor: city ? "white" : "#f3f4f6",
+              borderRadius: 12,
+              opacity: city ? 1 : 0.6,
+            }}
+            inputStyles={{ color: "#000" }}
+            dropdownTextStyles={{ color: "#000" }}
           />
         </Box>
 

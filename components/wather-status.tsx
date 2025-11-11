@@ -4,22 +4,18 @@ import { VStack } from "./ui/vstack";
 import { Box } from "./ui/box";
 import { Text } from "./ui/text";
 import {
-  Cloud,
   CloudRain,
-  Sun,
-  CloudDrizzle,
-  CloudLightning,
   Droplet,
   Wind,
   Eye,
   Gauge,
-  Sun as SunIcon,
-  Moon,
   Thermometer,
+  Sun,
+  Cloud,
+  CloudDrizzle,
+  CloudLightning,
 } from "lucide-react-native";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-type WeatherType = "sunny" | "cloudy" | "rainy" | "drizzle" | "stormy";
 
 interface WeatherData {
   temperature: number;
@@ -30,16 +26,9 @@ interface WeatherData {
   windDirection: string;
   visibility: number;
   pressure: number;
-  pressureTrend?: "up" | "down" | "stable";
-  uvIndex: number;
-  uvIndexLabel?: string;
-  dewPoint: number;
-  cloudCover: number;
-  airQuality: number;
-  airQualityLabel?: string;
-  sunrise: string;
-  sunset: string;
-  moonPhase: string;
+  precipitation: number;
+  rain: number;
+  showers: number;
 }
 
 interface WeatherStatusProps {
@@ -52,56 +41,63 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
   data,
 }) => {
   const { t } = useLanguage();
-  // Mock data - will be replaced with actual data from props
+
+  if (!data) {
+    return null;
+  }
+
   const weatherData: WeatherData = {
-    temperature: data?.temperature ?? 28,
-    feelsLike: data?.feelsLike ?? 25,
-    condition: data?.condition ?? "Partly Cloudy with Rain",
-    humidity: data?.humidity ?? 78,
-    windSpeed: data?.windSpeed ?? 12,
-    windDirection: data?.windDirection ?? "NE",
-    visibility: data?.visibility ?? 8,
-    pressure: data?.pressure ?? 1013,
-    pressureTrend: data?.pressureTrend ?? "down",
-    uvIndex: data?.uvIndex ?? 3,
-    uvIndexLabel: data?.uvIndexLabel ?? "Moderate",
-    dewPoint: data?.dewPoint ?? 22,
-    cloudCover: data?.cloudCover ?? 65,
-    airQuality: data?.airQuality ?? 42,
-    airQualityLabel: data?.airQualityLabel ?? "Good",
-    sunrise: data?.sunrise ?? "6:24 AM",
-    sunset: data?.sunset ?? "7:45 PM",
-    moonPhase: data?.moonPhase ?? "Waxing Gibbous",
+    temperature: data.temperature ?? 0,
+    feelsLike: data.feelsLike ?? 0,
+    condition: data.condition ?? "Unknown",
+    humidity: data.humidity ?? 0,
+    windSpeed: data.windSpeed ?? 0,
+    windDirection: data.windDirection ?? "N",
+    visibility: data.visibility ?? 0,
+    pressure: data.pressure ?? 0,
+    precipitation: data.precipitation || 0,
+    rain: data.rain || 0,
+    showers: data.showers || 0,
   };
 
-  const getWeatherIcon = (type: WeatherType, size: number = 64) => {
-    switch (type) {
-      case "sunny":
-        return <Sun size={size} color="#F59E0B" />;
-      case "cloudy":
-        return <Cloud size={size} color="#6B7280" />;
-      case "rainy":
-        return <CloudRain size={size} color="#3B82F6" />;
-      case "drizzle":
-        return <CloudDrizzle size={size} color="#60A5FA" />;
-      case "stormy":
-        return <CloudLightning size={size} color="#6366F1" />;
-      default:
-        return <Cloud size={size} color="#6B7280" />;
+  const getPrecipitationLabel = (
+    precipitation: number,
+    rain: number,
+    showers: number
+  ): string => {
+    const total = precipitation || rain || showers;
+    if (total === 0) return "No rain";
+    if (total < 0.5) return "Light rain";
+    if (total < 2.5) return "Moderate rain";
+    if (total < 10) return "Heavy rain";
+    return "Very heavy rain";
+  };
+
+  const getWeatherIcon = () => {
+    const condition = weatherData.condition.toLowerCase();
+    const size = 80;
+
+    if (condition.includes("clear") || condition.includes("sunny")) {
+      return <Sun size={size} color="#F59E0B" />;
     }
-  };
-
-  const getUVIndexColor = (index: number) => {
-    if (index <= 2) return "#10B981"; // Green - Low
-    if (index <= 5) return "#F59E0B"; // Yellow - Moderate
-    if (index <= 7) return "#F97316"; // Orange - High
-    return "#EF4444"; // Red - Very High
-  };
-
-  const getAirQualityColor = (aqi: number) => {
-    if (aqi <= 50) return "#10B981"; // Good
-    if (aqi <= 100) return "#F59E0B"; // Moderate
-    return "#EF4444"; // Unhealthy
+    if (condition.includes("cloudy") || condition.includes("partly")) {
+      return <Cloud size={size} color="#6B7280" />;
+    }
+    if (
+      condition.includes("rain") ||
+      condition.includes("drizzle") ||
+      condition.includes("shower")
+    ) {
+      return <CloudRain size={size} color="#3B82F6" />;
+    }
+    if (condition.includes("thunder") || condition.includes("storm")) {
+      return <CloudLightning size={size} color="#6366F1" />;
+    }
+    if (condition.includes("fog") || condition.includes("mist")) {
+      return <Cloud size={size} color="#9CA3AF" />;
+    }
+    // Default to cloud
+    return <Cloud size={size} color="#6B7280" />;
   };
 
   return (
@@ -123,36 +119,7 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
       </VStack>
       {/* Main Weather Card and Detailed Conditions */}
       <HStack space="md" className="items-start">
-        {/* Main Weather Display */}
-        <Box className="flex-1 bg-blue-50 rounded-xl p-4">
-          <VStack space="md">
-            <Box className="items-center">
-              <Thermometer size={32} color="#3B82F6" />
-            </Box>
-            <VStack space="xs" className="items-center">
-              <Text
-                className="text-gray-900 text-4xl font-bold"
-                style={{ fontFamily: "Z06-Walone-Bold" }}
-              >
-                {weatherData.temperature}°
-              </Text>
-              <Text
-                className="text-gray-700 text-base text-center"
-                style={{ fontFamily: "Z06-Walone-Regular" }}
-              >
-                {weatherData.condition}
-              </Text>
-              <Text
-                className="text-gray-500 text-sm"
-                style={{ fontFamily: "Z06-Walone-Regular" }}
-              >
-                {t("feelsLike")} {weatherData.feelsLike}°C
-              </Text>
-            </VStack>
-          </VStack>
-        </Box>
-
-        {/* Detailed Conditions Cards */}
+        {/* Detailed Conditions Cards - Moved to Left */}
         <VStack space="sm" className="flex-1">
           {/* Humidity */}
           <Box className="bg-blue-50 rounded-xl p-3">
@@ -191,7 +158,7 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
                 className="text-gray-900 text-sm font-semibold"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {weatherData.windSpeed} mph {weatherData.windDirection}
+                {weatherData.windSpeed} km/h {weatherData.windDirection}
               </Text>
             </HStack>
           </Box>
@@ -233,12 +200,80 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
                 className="text-gray-900 text-sm font-semibold"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {weatherData.pressure} mb{" "}
-                {weatherData.pressureTrend === "down" ? "↓" : "↑"}
+                {weatherData.pressure} mb
               </Text>
             </HStack>
           </Box>
+
+          {/* Precipitation/Rain */}
+          <Box className="bg-blue-50 rounded-xl p-3">
+            <HStack className="items-center justify-between">
+              <HStack space="sm" className="items-center">
+                <CloudRain size={20} color="#3B82F6" />
+                <Text
+                  className="text-gray-700 text-sm font-medium"
+                  style={{ fontFamily: "Z06-Walone-Regular" }}
+                >
+                  {t("rain") || "Rain"}
+                </Text>
+              </HStack>
+              <VStack space="xs" className="items-end">
+                <Text
+                  className="text-gray-900 text-sm font-semibold"
+                  style={{ fontFamily: "Z06-Walone-Bold" }}
+                >
+                  {getPrecipitationLabel(
+                    weatherData.precipitation,
+                    weatherData.rain,
+                    weatherData.showers
+                  )}
+                </Text>
+                {(weatherData.precipitation > 0 ||
+                  weatherData.rain > 0 ||
+                  weatherData.showers > 0) && (
+                  <Text
+                    className="text-gray-600 text-xs"
+                    style={{ fontFamily: "Z06-Walone-Regular" }}
+                  >
+                    {(
+                      weatherData.precipitation ||
+                      weatherData.rain ||
+                      weatherData.showers
+                    ).toFixed(1)}{" "}
+                    mm
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
+          </Box>
         </VStack>
+
+        {/* Main Weather Display with Icon - Moved to Right */}
+        <Box className="flex-1 bg-blue-50 rounded-xl p-4 h-full">
+          <VStack space="md" className="items-center">
+            <Box className="items-center">{getWeatherIcon()}</Box>
+            <VStack space="xs" className="items-center">
+              <Text
+                className="text-gray-900 text-4xl font-bold"
+                style={{ fontFamily: "Z06-Walone-Bold" }}
+              >
+                {weatherData.temperature}°
+              </Text>
+              <Text
+                className="text-gray-700 text-base text-center"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                {weatherData.condition}
+              </Text>
+              <Text
+                className="text-gray-500 text-sm"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                {t("feelsLike")} {weatherData.feelsLike}°C
+              </Text>
+            </VStack>
+          </VStack>
+        </Box>
       </HStack>
     </VStack>
   );

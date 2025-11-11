@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
-import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
+import { ActivityIndicator } from "react-native";
 import {
   MapPin,
   User,
@@ -23,20 +23,177 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuthStore } from "@/stores/auth-store";
 import { useLogout } from "@/hooks/use-auth";
+import { useLocation } from "@/hooks/use-location";
+import {
+  useWeather,
+  useFloodData,
+  usePrecipitation,
+} from "@/hooks/use-weather";
+
+const getWeatherCondition = (code: number, isDay: number): string => {
+  if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
+  if (code <= 3) return "Partly Cloudy";
+  if (code <= 48) return "Foggy";
+  if (code <= 55) return "Drizzle";
+  if (code <= 57) return "Freezing Drizzle";
+  if (code <= 65) return "Rain";
+  if (code <= 67) return "Freezing Rain";
+  if (code <= 77) return "Snow";
+  if (code <= 82) return "Rain Showers";
+  if (code <= 86) return "Snow Showers";
+  if (code <= 99) return "Thunderstorm";
+  return "Unknown";
+};
+
+const getWindDirection = (degrees: number): string => {
+  const directions = [
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+  ];
+  return directions[Math.round(degrees / 22.5) % 16];
+};
 
 export default function HomeScreen() {
   const { t } = useLanguage();
   const { user, isAuthenticated } = useAuthStore();
   const logoutMutation = useLogout();
-  const userLocation = user
-    ? `${user.city}, ${user.township}`
-    : "Yangon, Myanmar";
-  const [floodRisk] = useState(90); // Percentage (0-100)
-  const [weatherData] = useState({
-    today: "sunny",
-    tomorrow: "rainy",
-    dayAfter: "sunny",
-  });
+  const {
+    coordinates,
+    loading: locationLoading,
+    error: locationError,
+  } = useLocation();
+
+  const weatherQuery = useWeather(
+    coordinates?.latitude ?? null,
+    coordinates?.longitude ?? null
+  );
+
+  const floodQuery = useFloodData(
+    coordinates?.latitude ?? null,
+    coordinates?.longitude ?? null
+  );
+  const precipitationQuery = usePrecipitation(
+    coordinates?.latitude ?? null,
+    coordinates?.longitude ?? null
+  );
+
+  const userLocation = useMemo(() => {
+    if (isAuthenticated && user) {
+      return `${user.city}, ${user.township}`;
+    }
+    if (coordinates?.city) {
+      // Show city, township if available, otherwise just city
+      if (coordinates.township) {
+        return `${coordinates.city}, ${coordinates.township}`;
+      }
+      return coordinates.city;
+    }
+    if (coordinates) {
+      // Fallback to coordinates if reverse geocoding failed
+      return `${coordinates.latitude.toFixed(
+        2
+      )}, ${coordinates.longitude.toFixed(2)}`;
+    }
+    return "Getting location...";
+  }, [isAuthenticated, user, coordinates]);
+
+  const floodRisk = useMemo(() => {
+    if (floodQuery.data?.current?.flood_risk !== undefined) {
+      return Math.round(floodQuery.data.current.flood_risk);
+    }
+    return 0;
+  }, [floodQuery.data]);
+
+  const weatherData = useMemo(() => {
+    if (!weatherQuery.data?.current) return null;
+
+    const current = weatherQuery.data.current;
+    const condition = getWeatherCondition(current.weather_code, current.is_day);
+    const windDir = getWindDirection(current.wind_direction_10m);
+
+    return {
+      temperature: Math.round(current.temperature_2m),
+      feelsLike: Math.round(current.temperature_2m - 2),
+      condition,
+      humidity: current.relative_humidity_2m,
+      windSpeed: Math.round(current.wind_speed_10m),
+      windDirection: windDir,
+      visibility: Math.round((current.visibility || 10000) / 1000),
+      pressure: Math.round(current.surface_pressure),
+      precipitation: current.precipitation || 0,
+      rain: current.rain || 0,
+      showers: current.showers || 0,
+    };
+  }, [weatherQuery.data]);
+
+  console.log("weatherData", weatherData);
+
+  const precipitationData = useMemo(() => {
+    if (!precipitationQuery.data?.hourly) return null;
+
+    const { time, precipitation } = precipitationQuery.data.hourly;
+
+    // The API returns exactly 48 hours: 24 past hours (indices 0-23) + 24 future hours (indices 24-47)
+    // The current hour is NOT included in the response
+    const totalHours = precipitation.length;
+
+    if (totalHours < 48) {
+      console.warn("Expected 48 hours of data, got:", totalHours);
+    }
+
+    // Last hour: the most recent past hour (index 23, which is the 24th hour from the past)
+    const lastHourIndex = 23;
+    const lastHour =
+      lastHourIndex < precipitation.length
+        ? precipitation[lastHourIndex] || 0
+        : 0;
+
+    // Last 24 hours: sum of all past 24 hours (indices 0-23)
+    const past24Hours = precipitation
+      .slice(0, 24)
+      .reduce((sum, val) => sum + (val || 0), 0);
+
+    // Next 24 hours forecast: sum of all future 24 hours (indices 24-47)
+    const future24Hours = precipitation
+      .slice(24, 48)
+      .reduce((sum, val) => sum + (val || 0), 0);
+
+    const result = {
+      lastHour: Math.round(lastHour * 10) / 10, // Round to 1 decimal (in mm)
+      last24Hours: Math.round(past24Hours * 10) / 10, // Round to 1 decimal (in mm)
+      next24HoursForecast: Math.round(future24Hours * 10) / 10, // Round to 1 decimal (in mm)
+    };
+
+    console.log("Precipitation data (real from API):", {
+      lastHour: result.lastHour,
+      last24Hours: result.last24Hours,
+      next24HoursForecast: result.next24HoursForecast,
+      rawData: {
+        totalHours,
+        past24HoursSum: past24Hours,
+        future24HoursSum: future24Hours,
+        lastHourValue: precipitation[lastHourIndex],
+        samplePast: precipitation.slice(20, 24),
+        sampleFuture: precipitation.slice(24, 28),
+      },
+    });
+
+    return result;
+  }, [precipitationQuery.data]);
 
   const getFloodRiskColor = (risk: number) => {
     if (risk < 40) return "#10B981"; // Green
@@ -121,21 +278,29 @@ export default function HomeScreen() {
             >
               {t("floodRiskLevel")}
             </Text>
-            <Text
-              className="text-sm font-bold"
-              style={{ color: getFloodRiskColor(floodRisk) }}
-            >
-              {floodRisk}%
-            </Text>
+            {floodQuery.isLoading ? (
+              <ActivityIndicator size="small" color="#3B82F6" />
+            ) : (
+              <Text
+                className="text-sm font-bold"
+                style={{ color: getFloodRiskColor(floodRisk) }}
+              >
+                {floodRisk}%
+              </Text>
+            )}
           </HStack>
           <Box className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <Box
-              className="h-full rounded-full"
-              style={{
-                width: `${floodRisk}%`,
-                backgroundColor: getFloodRiskColor(floodRisk),
-              }}
-            />
+            {floodQuery.isLoading ? (
+              <Box className="h-full bg-gray-300 rounded-full" />
+            ) : (
+              <Box
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max(floodRisk, 5)}%`,
+                  backgroundColor: getFloodRiskColor(floodRisk),
+                }}
+              />
+            )}
           </Box>
         </Box>
         {/* Safety Check Notification - appears after successful API call when risk > 80 */}
@@ -145,7 +310,7 @@ export default function HomeScreen() {
           onResponseSubmitted={handleSafetyResponse}
         />
         {/* Alert Messages (if needed) */}
-        {floodRisk >= 70 && (
+        {!floodQuery.isLoading && floodRisk >= 70 && (
           <Box className="mx-4 mb-2  bg-orange-100 border-l-4 border-orange-500 rounded-lg p-4">
             <HStack space="sm" className="items-start">
               <AlertCircle size={20} color="#F59E0B" />
@@ -168,48 +333,85 @@ export default function HomeScreen() {
         )}
 
         <Box className="bg-white px-4 mx-4 mt-2 rounded-xl py-4">
-          <WeatherStatus
-            location={userLocation}
-            data={{
-              temperature: 28,
-              feelsLike: 25,
-              condition: "Partly Cloudy with Rain",
-              humidity: 78,
-              windSpeed: 12,
-              windDirection: "NE",
-              visibility: 8,
-              pressure: 1013,
-              pressureTrend: "down",
-              uvIndex: 3,
-              uvIndexLabel: "Moderate",
-              dewPoint: 22,
-              cloudCover: 65,
-              airQuality: 42,
-              airQualityLabel: "Good",
-              sunrise: "6:24 AM",
-              sunset: "7:45 PM",
-              moonPhase: "Waxing Gibbous",
-            }}
-          />
+          {locationLoading || weatherQuery.isLoading ? (
+            <VStack space="md" className="items-center py-8">
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text
+                className="text-gray-600 text-sm"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                Loading weather data...
+              </Text>
+            </VStack>
+          ) : locationError || weatherQuery.isError ? (
+            <VStack space="sm" className="items-center py-4">
+              <AlertCircle size={32} color="#EF4444" />
+              <Text
+                className="text-red-600 text-sm text-center"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                {locationError || "Failed to load weather data"}
+              </Text>
+            </VStack>
+          ) : weatherData ? (
+            <WeatherStatus location={userLocation} data={weatherData} />
+          ) : null}
         </Box>
 
         {/* Precipitation Analysis */}
         <Box className="bg-white px-4 mx-4 mt-4 rounded-xl py-4 mb-4">
-          <PrecipitationAnalysis
-            precipitation={{
-              lastHour: 0.4,
-              last24Hours: 2.3,
-              next24HoursForecast: 4.5,
-            }}
-            floodRisk={{
-              riskLevel: "MODERATE",
-              soilSaturation: 85,
-              riverLevels: "Rising",
-              stormDrains: "Near Capacity",
-              alertMessage:
-                "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation.",
-            }}
-          />
+          {precipitationQuery.isLoading || locationLoading ? (
+            <VStack space="md" className="items-center py-8">
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text
+                className="text-gray-600 text-sm"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                Loading precipitation data...
+              </Text>
+            </VStack>
+          ) : precipitationQuery.isError || locationError ? (
+            <VStack space="sm" className="items-center py-4">
+              <AlertCircle size={32} color="#EF4444" />
+              <Text
+                className="text-red-600 text-sm text-center"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+              >
+                {locationError || "Failed to load precipitation data"}
+              </Text>
+            </VStack>
+          ) : (
+            <PrecipitationAnalysis
+              precipitation={precipitationData || undefined}
+              floodRisk={{
+                riskLevel:
+                  floodRisk < 40
+                    ? "LOW"
+                    : floodRisk < 70
+                    ? "MODERATE"
+                    : floodRisk < 90
+                    ? "HIGH"
+                    : "SEVERE",
+                soilSaturation: Math.min(100, Math.round(floodRisk * 1.2)),
+                riverLevels:
+                  floodRisk < 40
+                    ? "Normal"
+                    : floodRisk < 70
+                    ? "Rising"
+                    : "High",
+                stormDrains:
+                  floodRisk < 40
+                    ? "Normal"
+                    : floodRisk < 70
+                    ? "Near Capacity"
+                    : "At Capacity",
+                alertMessage:
+                  floodRisk >= 70
+                    ? "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation."
+                    : undefined,
+              }}
+            />
+          )}
         </Box>
       </ScrollView>
     </SafeAreaView>
