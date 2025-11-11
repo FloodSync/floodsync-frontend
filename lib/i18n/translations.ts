@@ -75,6 +75,8 @@ export const translations = {
     notifications: "Notifications",
     stayInformed: "Stay informed",
     noNotifications: "No new notifications",
+    floodAlertTitle: "High Flood Risk Alert",
+    floodAlertMessage: "Flood risk is {risk}% in {location}. Please stay alert and be prepared.",
 
     // Loading
     loading: "Loading...",
@@ -162,6 +164,8 @@ export const translations = {
     notifications: "အကြောင်းကြားစာများ",
     stayInformed: "သတင်းအချက်အလက်ရယူပါ",
     noNotifications: "အကြောင်းကြားစာအသစ်မရှိပါ",
+    floodAlertTitle: "ရေလျှံအန္တရာယ်မြင့်မားသော သတိပေးချက်",
+    floodAlertMessage: "{location} တွင် ရေလျှံနိုင်ခြေ {risk}% ရှိပါသည်။ သတိထားရန် လိုအပ်ပါသည်။",
 
     // Loading
     loading: "ဖွင့်နေသည်...",

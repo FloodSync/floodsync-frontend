@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/auth-store";
 import { authApi, LoginRequest, RegisterRequest } from "@/lib/api/auth";
+import { notificationService } from "@/lib/notifications/notification-service";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -59,12 +60,28 @@ export const useLogout = () => {
       if (!token) throw new Error("No token");
       return authApi.logout(token);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Unregister push token before clearing auth
+      if (token) {
+        try {
+          await notificationService.unregisterPushToken(token);
+        } catch (error) {
+          console.error("Failed to unregister push token on logout:", error);
+        }
+      }
       clearAuth();
       queryClient.clear();
       router.replace("/(auth)/login");
     },
-    onError: () => {
+    onError: async () => {
+      // Unregister push token even on error
+      if (token) {
+        try {
+          await notificationService.unregisterPushToken(token);
+        } catch (error) {
+          console.error("Failed to unregister push token on logout:", error);
+        }
+      }
       clearAuth();
       queryClient.clear();
       router.replace("/(auth)/login");

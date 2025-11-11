@@ -29,6 +29,8 @@ import {
   useFloodData,
   usePrecipitation,
 } from "@/hooks/use-weather";
+import { useFloodNotifications } from "@/hooks/use-flood-notifications";
+import { APP_CONFIG, isDemoMode, getDemoFloodRisk } from "@/lib/config/app-config";
 
 const getWeatherCondition = (code: number, isDay: number): string => {
   if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
@@ -92,6 +94,12 @@ export default function HomeScreen() {
   );
 
   const userLocation = useMemo(() => {
+    // Use demo location if demo mode is enabled
+    if (isDemoMode()) {
+      return APP_CONFIG.DEMO_DATA.location;
+    }
+
+    // Use real location data
     if (isAuthenticated && user) {
       return `${user.city}, ${user.township}`;
     }
@@ -112,13 +120,32 @@ export default function HomeScreen() {
   }, [isAuthenticated, user, coordinates]);
 
   const floodRisk = useMemo(() => {
+    // Use demo data if demo mode is enabled
+    if (isDemoMode()) {
+      return getDemoFloodRisk();
+    }
+    
+    // Use real API data
     if (floodQuery.data?.current?.flood_risk !== undefined) {
       return Math.round(floodQuery.data.current.flood_risk);
     }
     return 0;
   }, [floodQuery.data]);
 
+  // Set up flood risk notifications
+  useFloodNotifications({
+    floodRisk,
+    location: userLocation,
+    enabled: isDemoMode() || (!locationLoading && !floodQuery.isLoading && floodRisk > 0),
+  });
+
   const weatherData = useMemo(() => {
+    // Use demo data if demo mode is enabled
+    if (isDemoMode()) {
+      return APP_CONFIG.DEMO_DATA.weather;
+    }
+
+    // Use real API data
     if (!weatherQuery.data?.current) return null;
 
     const current = weatherQuery.data.current;
@@ -143,6 +170,12 @@ export default function HomeScreen() {
   console.log("weatherData", weatherData);
 
   const precipitationData = useMemo(() => {
+    // Use demo data if demo mode is enabled
+    if (isDemoMode()) {
+      return APP_CONFIG.DEMO_DATA.precipitation;
+    }
+
+    // Use real API data
     if (!precipitationQuery.data?.hourly) return null;
 
     const { time, precipitation } = precipitationQuery.data.hourly;
