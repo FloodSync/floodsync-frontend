@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+
 import {
   Text,
   TextInput,
@@ -8,11 +9,13 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+
 import { useRegister } from "@/hooks/use-auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";

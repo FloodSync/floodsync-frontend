@@ -1,329 +1,434 @@
-import React, { useState, useRef } from "react";
-import { 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  Text, 
-  FlatList, 
-  KeyboardAvoidingView, 
-  Platform,
+import React, { useState, useCallback } from "react";
+import {
+  Text,
+  TouchableOpacity,
   ScrollView,
-  StatusBar
+  Pressable,
+  Linking,
+  Image,
 } from "react-native";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
-type Message = {
-  id: string;
-  text: string;
-  sender: "user" | "ai";
+// Add this before your component
+const videoThumbnails = {
+  "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP": require("@/assets/images/flood-101-thumbnail.webp"),
+  "https://youtu.be/cCZWkMXJwQE?si=QXsb-H7q5T1YvbM_": require("@/assets/images/risk-assessment-thumbnail.jpg"),
+  "https://youtu.be/43M5mZuzHF8?si=bjAf3CwBrjvSiiX5": require("@/assets/images/emergency-preparedness-thumbnail.jpg"),
+  "https://youtu.be/pi_nUPcQz_A?si=nTaK05UGqVwQQYcI": require("@/assets/images/prepare-flood-thumbnail.jpg"),
+  "https://youtu.be/rV1iqRD9EKY?si=Q5gUX-Aq-jEvqCa3": require("@/assets/images/during-flood-thumbnail.jpg"),
+  "https://youtu.be/cqCMXSOo8qc?si=djeRXyfCFzBX_yuP": require("@/assets/images/flood-safety-thumbnail.jpg"),
+  "https://youtube.com/shorts/Xq8ZHcI49es?si=miD2etNlHizqEGUC": require("@/assets/images/flood-proof-home-thumbnail.jpg"),
+  "https://youtu.be/7b0p5ZzN524?si=aFyoyEOX_kM_y_uK": require("@/assets/images/sandbagging-thumbnail.jpg"),
+  "https://youtu.be/Qdtii023TdA?si=gg7Rnce2HqiOAp4J": require("@/assets/images/post-flood-thumbnail.jpg"),
+  "https://youtu.be/vnzlQ3l05Xs?si=hjNhGgSuXLujgE5B": require("@/assets/images/flood-cleanup-thumbnail.jpg"),
+  "https://youtu.be/W6E_ePBCzOA?si=Vn_gHYykmvUyMfMT": require("@/assets/images/first-aid-thumbnail.jpg"),
+  "https://youtu.be/26n4DWNPzvM?si=P0mXAUteaine9C_C": require("@/assets/images/waterborne-diseases-thumbnail.jpg"),
+};
+
+// Fallback gradient colors for each section
+const sectionColors = {
+  1: ["from-red-500", "to-red-700"],
+  2: ["from-blue-500", "to-blue-700"],
+  3: ["from-cyan-500", "to-cyan-700"],
+  4: ["from-green-500", "to-green-700"],
+  5: ["from-purple-500", "to-purple-700"],
+  6: ["from-pink-500", "to-pink-700"],
 };
 
 const Guide = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [expandedSection, setExpandedSection] = useState<number | null>(null);
+
+  // Function to extract YouTube video ID from URL
+const getYouTubeVideoId = (url: string) => {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  return match ? match[1] : null;
+};
+
+  const educationalContent = [
     {
-      id: "1",
-      text: "Hello! I'm your Flood Safety Assistant. I can help you with emergency procedures, safety tips, and personalized guidance.",
-      sender: "ai",
+      id: 1,
+      title: "Understanding Flood Risks",
+      icon: "warning",
+      color: "bg-red-500",
+      videos: [
+        {
+          title: "Flooding 101 - Understanding Flood Risk",
+          url: "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP",
+          duration: "4:30"
+        },
+        {
+          title: "Flood Risk Assessment and Management",
+          url: "https://youtu.be/cCZWkMXJwQE?si=QXsb-H7q5T1YvbM_",
+          duration: "6:15"
+        }
+      ],
+      guidelines: [
+        "Know your area's flood risk level",
+        "Understand flash flood warnings",
+        "Identify flood-prone zones in your community",
+        "Monitor weather forecasts regularly"
+      ]
     },
     {
-      id: "2", 
-      text: "Tell me about your situation or ask any flood-related questions for personalized assistance.",
-      sender: "ai",
+      id: 2,
+      title: "Emergency Preparedness",
+      icon: "shield-checkmark",
+      color: "bg-blue-500",
+      videos: [
+        {
+          title: "Emergency Preparedness: Floods",
+          url: "https://youtu.be/43M5mZuzHF8?si=bjAf3CwBrjvSiiX5",
+          duration: "5:45"
+        },
+        {
+          title: "How to Prepare for a Flood",
+          url: "https://youtu.be/pi_nUPcQz_A?si=nTaK05UGqVwQQYcI",
+          duration: "7:20"
+        }
+      ],
+      guidelines: [
+        "Create a 72-hour emergency kit",
+        "Establish family communication plan",
+        "Learn evacuation routes",
+        "Keep important documents waterproof",
+        "Practice evacuation drills quarterly"
+      ]
+    },
+    {
+      id: 3,
+      title: "During a Flood",
+      icon: "water",
+      color: "bg-cyan-500",
+      videos: [
+        {
+          title: "What to Do During a Flood",
+          url: "https://youtu.be/rV1iqRD9EKY?si=Q5gUX-Aq-jEvqCa3",
+          duration: "3:50"
+        },
+        {
+          title: "Flood Safety Tips",
+          url: "https://youtu.be/cqCMXSOo8qc?si=djeRXyfCFzBX_yuP",
+          duration: "4:15"
+        }
+      ],
+      guidelines: [
+        "Move to higher ground immediately",
+        "Avoid walking or driving through flood waters",
+        "Stay away from electrical equipment",
+        "Follow evacuation orders without delay",
+        "Do not attempt to swim through flood waters"
+      ]
+    },
+    {
+      id: 4,
+      title: "Home Protection",
+      icon: "home",
+      color: "bg-green-500",
+      videos: [
+        {
+          title: "How to Flood-Proof Your Home",
+          url: "https://youtube.com/shorts/Xq8ZHcI49es?si=miD2etNlHizqEGUC",
+          duration: "8:30"
+        },
+        {
+          title: "Sandbagging for Flood Protection",
+          url: "https://youtu.be/7b0p5ZzN524?si=aFyoyEOX_kM_y_uK",
+          duration: "6:45"
+        }
+      ],
+      guidelines: [
+        "Install check valves in plumbing",
+        "Waterproof basement walls",
+        "Elevate electrical systems",
+        "Anchor fuel tanks",
+        "Clear gutters and drains regularly"
+      ]
+    },
+    {
+      id: 5,
+      title: "After Flood Safety",
+      icon: "medical",
+      color: "bg-purple-500",
+      videos: [
+        {
+          title: "Post-Flood Recovery Guide",
+          url: "https://youtu.be/Qdtii023TdA?si=gg7Rnce2HqiOAp4J",
+          duration: "9:15"
+        },
+        {
+          title: "Flood Cleanup and Safety",
+          url: "https://youtu.be/vnzlQ3l05Xs?si=hjNhGgSuXLujgE5B",
+          duration: "7:30"
+        }
+      ],
+      guidelines: [
+        "Wait for official clearance to return",
+        "Check for structural damage",
+        "Document damage for insurance",
+        "Disinfect contaminated items",
+        "Watch for mold growth",
+        "Test drinking water safety"
+      ]
+    },
+    {
+      id: 6,
+      title: "First Aid & Health",
+      icon: "medkit",
+      color: "bg-pink-500",
+      videos: [
+        {
+          title: "First Aid for Flood-Related Injuries",
+          url: "https://youtu.be/W6E_ePBCzOA?si=Vn_gHYykmvUyMfMT",
+          duration: "5:20"
+        },
+        {
+          title: "Waterborne Diseases After Flooding",
+          url: "https://youtu.be/26n4DWNPzvM?si=P0mXAUteaine9C_C",
+          duration: "6:40"
+        }
+      ],
+      guidelines: [
+        "Treat wounds immediately to prevent infection",
+        "Watch for signs of waterborne diseases",
+        "Maintain personal hygiene",
+        "Use protective gear during cleanup",
+        "Seek medical attention for any symptoms"
+      ]
     }
-  ]);
-  const [input, setInput] = useState("");
-  const flatListRef = useRef<FlatList>(null);
-
-  const suggestedQuestions = [
-    "What to do during flooding?",
-    "Emergency kit checklist", 
-    "Evacuation procedures",
-    "Flood safety tips",
-    "Report emergency"
   ];
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const emergencyContacts = [
+    { name: "Emergency Services", number: "911", icon: "alert-circle" },
+    { name: "Flood Helpline", number: "09 450 065 964", icon: "call" },
+    { name: "Local Emergency", number: "+95 9 431 59737", icon: "business" },
+    { name: "Power Outage", number: "1-800-POWERON", icon: "flash" }
+  ];
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: input,
-      sender: "user",
-    };
+  const toggleSection = useCallback((sectionId: number) => {
+    setExpandedSection(expandedSection === sectionId ? null : sectionId);
+  }, [expandedSection]);
 
-    setMessages(prev => [userMessage, ...prev]);
-    setInput("");
+  const openVideo = useCallback((url: string) => {
+    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+  }, []);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(input);
-      setMessages(prev => [aiResponse, ...prev]);
-    }, 1000);
-  };
-
-  const generateAIResponse = (userInput: string): Message => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes("during") || input.includes("what to do")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        text: "🚨 During a Flood:\n\n• Move to higher ground immediately\n• Avoid walking/driving through flood waters\n• Evacuate if instructed\n• Stay away from electrical equipment\n• Listen to emergency alerts",
-        sender: "ai",
-      };
-    }
-
-    if (input.includes("kit") || input.includes("prepare") || input.includes("emergency kit")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        text: "🛡️ Emergency Kit Essentials:\n\n• Water (1 gal/person/day)\n• Non-perishable food\n• First aid kit\n• Flashlight + batteries\n• Important documents\n• Medications",
-        sender: "ai",
-      };
-    }
-
-    if (input.includes("evacuate") || input.includes("evacuation")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        text: "📍 Evacuation Guidance:\n\n• Follow official orders immediately\n• Take emergency kit\n• Use designated routes\n• Avoid flooded roads\n• Inform family of location",
-        sender: "ai",
-      };
-    }
-
-    if (input.includes("emergency") || input.includes("help") || input.includes("sos")) {
-      return {
-        id: (Date.now() + 1).toString(),
-        text: "🚨 EMERGENCY PROTOCOL:\n\n1. Call emergency services: 911\n2. Move to highest safe location\n3. Avoid flood waters\n4. Stay on upper floors\n5. Wait for rescue\n\nShare your location if possible.",
-        sender: "ai",
-      };
-    }
-
-    return {
-      id: (Date.now() + 1).toString(),
-      text: "I understand your concern about flood safety. Could you share more details about your situation? This helps me provide the most relevant guidance.",
-      sender: "ai",
-    };
-  };
-
-  const handleQuickQuestion = (question: string) => {
-    setInput(question);
-    setTimeout(() => handleSend(), 100);
-  };
-
-  const renderItem = ({ item }: { item: Message }) => (
-    <View style={{ 
-      marginVertical: 4, 
-      marginHorizontal: 16,
-      alignItems: item.sender === "user" ? "flex-end" : "flex-start" 
-    }}>
-      <View 
-        style={{
-          backgroundColor: item.sender === "user" ? "#3b82f6" : "#ffffff",
-          borderWidth: 1,
-          borderColor: item.sender === "user" ? "#3b82f6" : "#e5e7eb",
-          borderRadius: 20,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          maxWidth: "85%",
-          borderBottomRightRadius: item.sender === "user" ? 4 : 20,
-          borderBottomLeftRadius: item.sender === "user" ? 20 : 4,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 2,
-        }}
-      >
-        <Text style={{
-          color: item.sender === "user" ? "#ffffff" : "#1f2937",
-          fontSize: 16,
-          lineHeight: 22,
-        }}>
-          {item.text}
-        </Text>
-      </View>
-      <Text style={{
-        fontSize: 12,
-        marginTop: 4,
-        color: item.sender === "user" ? "#3b82f6" : "#6b7280",
-      }}>
-        {item.sender === "user" ? "You" : "Flood Assistant"}
-      </Text>
-    </View>
-  );
+  const callEmergency = useCallback((number: string) => {
+    Linking.openURL(`tel:${number}`);
+  }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
-      
-      {/* Header */}
-      {/* <View style={{
-        backgroundColor: "#ffffff",
-        paddingHorizontal: 24,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#e5e7eb",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-      }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View>
-            <Text style={{ fontSize: 24, fontWeight: "bold", color: "#111827" }}>
-              Flood Safety
-            </Text>
-            <Text style={{ color: "#6b7280", fontSize: 16, marginTop: 2 }}>
-              AI Assistant
-            </Text>
-          </View>
-        </View>
-      </View> */}
+    <SafeAreaView className="flex-1 bg-blue-50">
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <Heading className="text-blue-700 text-3xl font-bold mb-2 text-left">
+          Flood Safety Education
+        </Heading>
+        <Text className="text-gray-600 text-left mb-6">
+          Complete Guide for Preparedness and Response
+        </Text>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-      >
-        {/* Suggested Questions */}
-        <View style={{
-          backgroundColor: "#ffffff",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: "#f3f4f6",
-        }}>
-          <Text style={{ color: "#4b5563", fontSize: 14, fontWeight: "500", marginBottom: 8 }}>
-            Quick Questions
-          </Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 16 }}
-          >
-            {suggestedQuestions.map((question, index) => (
-              <TouchableOpacity
+        {/* Emergency Contacts */}
+        <Box className="mb-6">
+          <Heading className="text-xl font-bold text-gray-800 mb-4">
+            Emergency Contacts
+          </Heading>
+          <Box className="flex-row flex-wrap justify-between">
+            {emergencyContacts.map((contact, index) => (
+              <TouchableOpacity 
                 key={index}
-                onPress={() => handleQuickQuestion(question)}
-                style={{
-                  backgroundColor: "#dbeafe",
-                  borderWidth: 1,
-                  borderColor: "#93c5fd",
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  marginRight: 12,
-                }}
+                className="w-[48%] bg-white p-4 rounded-2xl border border-gray-200 mb-3 shadow-sm"
+                onPress={() => callEmergency(contact.number)}
               >
-                <Text style={{ color: "#1e40af", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
-                  {question}
-                </Text>
+                <Box className="items-center">
+                  <Ionicons name={contact.icon} size={24} color="#ef4444" />
+                  <Text className="text-gray-800 font-semibold mt-2 text-center">
+                    {contact.name}
+                  </Text>
+                  <Text className="text-red-500 font-bold text-sm mt-1">
+                    {contact.number}
+                  </Text>
+                </Box>
               </TouchableOpacity>
             ))}
-          </ScrollView>
-        </View>
+          </Box>
+        </Box>
 
-        {/* Chat Messages */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingVertical: 16 }}
-          showsVerticalScrollIndicator={false}
-          inverted
-          style={{ flex: 1 }}
-        />
-
-        {/* Input Area */}
-        <View style={{
-          backgroundColor: "#ffffff",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
-        }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
-            <View style={{
-              flex: 1,
-              backgroundColor: "#f3f4f6",
-              borderRadius: 20,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderWidth: 1,
-              borderColor: "#d1d5db",
-            }}>
-              <TextInput
-                style={{ 
-                  color: "#111827", 
-                  fontSize: 16, 
-                  maxHeight: 80,
-                }}
-                placeholder="Type your message..."
-                placeholderTextColor="#9ca3af"
-                value={input}
-                onChangeText={setInput}
-                multiline
-                maxLength={500}
-                textAlignVertical="center"
-              />
-            </View>
-            <TouchableOpacity
-              style={{
-                backgroundColor: input.trim() ? "#3b82f6" : "#9ca3af",
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                alignItems: "center",
-                justifyContent: "center",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.2,
-                shadowRadius: 2,
-                elevation: 2,
-              }}
-              onPress={handleSend}
-              disabled={!input.trim()}
+        {/* Educational Sections */}
+        {educationalContent.map((section) => (
+          <Box key={section.id} className="bg-white rounded-2xl p-4 mb-4 border border-gray-200 shadow-sm">
+            <TouchableOpacity 
+              className="flex-row items-center justify-between"
+              onPress={() => toggleSection(section.id)}
             >
-              <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>
-                ↑
-              </Text>
+              <Box className="flex-row items-center">
+                <Box className={`w-10 h-10 rounded-full ${section.color} items-center justify-center mr-3`}>
+                  <Ionicons name={section.icon} size={20} color="white" />
+                </Box>
+                <Heading className="text-lg font-bold text-gray-800">
+                  {section.title}
+                </Heading>
+              </Box>
+              <Ionicons 
+                name={expandedSection === section.id ? "chevron-up" : "chevron-down"} 
+                size={24} 
+                color="#6b7280" 
+              />
             </TouchableOpacity>
-          </View>
-          
-          {/* Character count */}
-          {input.length > 0 && (
-            <Text style={{ color: "#9ca3af", fontSize: 12, textAlign: "right", marginTop: 8 }}>
-              {input.length}/500
-            </Text>
-          )}
-        </View>
-      </KeyboardAvoidingView>
 
-      {/* Emergency Button */}
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          bottom: 100,
-          right: 24,
-          backgroundColor: "#dc2626",
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
-        onPress={() => handleQuickQuestion("EMERGENCY: Need immediate help!")}
+            {expandedSection === section.id && (
+              <Box className="mt-4">
+               {/* Video Lectures */}
+<Text className="text-gray-700 font-semibold mb-3">Video Lectures</Text>
+<Box className="mb-4">
+  {section.videos.map((video, index) => {
+    const thumbnailSource = videoThumbnails[video.url];
+    const [fromColor, toColor] = sectionColors[section.id] || ["from-blue-500", "to-purple-600"];
+
+    return (
+      <TouchableOpacity 
+        key={index}
+        className="mb-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+        onPress={() => openVideo(video.url)}
+        activeOpacity={0.7}
       >
-        <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 12, textAlign: "center" }}>
-          SOS
-        </Text>
+        {/* Thumbnail Container */}
+        <Box className="relative">
+          {thumbnailSource ? (
+            // Local Image Thumbnail
+            <Image 
+              source={thumbnailSource}
+              className="w-full h-48"
+              resizeMode="cover"
+            />
+          ) : (
+            // Fallback Gradient
+            <Box className={`w-full h-48 bg-gradient-to-br ${fromColor} ${toColor} items-center justify-center`}>
+              <Box className="bg-black bg-opacity-30 rounded-full p-4">
+                <Ionicons name="play" size={32} color="white" />
+              </Box>
+            </Box>
+          )}
+          
+          {/* Play Button Overlay */}
+          <Box className="absolute inset-0 items-center justify-center">
+            <Box className="bg-black bg-opacity-40 rounded-full p-3">
+              <Ionicons name="play" size={24} color="white" />
+            </Box>
+          </Box>
+          
+          {/* Duration Badge */}
+          <Box className="absolute top-3 right-3 bg-black bg-opacity-80 px-2 py-1 rounded">
+            <Text className="text-white text-xs font-medium">
+              {video.duration}
+            </Text>
+          </Box>
+        </Box>
+        
+        {/* Video Info */}
+        <Box className="p-4">
+          <Text className="text-gray-800 font-bold text-base mb-2">
+            {video.title}
+          </Text>
+          
+          <Box className="flex-row items-center">
+            <Box className="w-6 h-6 bg-red-500 rounded-full items-center justify-center mr-2">
+              <Ionicons name="play-circle" size={12} color="white" />
+            </Box>
+            <Text className="text-gray-600 text-sm">
+              Flood Safety Education
+            </Text>
+            <Text className="text-gray-400 text-sm mx-2">•</Text>
+            <Text className="text-gray-500 text-sm">Tap to watch</Text>
+          </Box>
+        </Box>
       </TouchableOpacity>
-    </View>
+    );
+  })}
+</Box>
+
+                {/* Guidelines */}
+                <Text className="text-gray-700 font-semibold mb-3">Safety Guidelines</Text>
+                <Box className="bg-green-50 p-3 rounded-xl">
+                  {section.guidelines.map((guideline, index) => (
+                    <Box key={index} className="flex-row items-start mb-2">
+                      <Ionicons name="checkmark-circle" size={16} color="#10b981" className="mt-1" />
+                      <Text className="text-gray-700 ml-2 flex-1">
+                        {guideline}
+                      </Text>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
+        ))}
+
+        {/* Quick Action Tips */}
+        <Box className="bg-white rounded-2xl p-4 mb-4 border border-gray-200 shadow-sm">
+          <Heading className="text-xl font-bold text-gray-800 mb-4">
+            Quick Action Tips
+          </Heading>
+          <Box className="flex-row flex-wrap justify-between">
+            <Box className="w-[48%] bg-orange-50 p-4 rounded-xl items-center mb-3">
+              <Ionicons name="volume-high" size={24} color="#f59e0b" />
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
+                Stay Informed
+              </Text>
+            </Box>
+            <Box className="w-[48%] bg-red-50 p-4 rounded-xl items-center mb-3">
+              <Ionicons name="walk" size={24} color="#ef4444" />
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
+                Evacuate Early
+              </Text>
+            </Box>
+            <Box className="w-[48%] bg-green-50 p-4 rounded-xl items-center">
+              <Ionicons name="battery-charging" size={24} color="#10b981" />
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
+                Charge Devices
+              </Text>
+            </Box>
+            <Box className="w-[48%] bg-blue-50 p-4 rounded-xl items-center">
+              <Ionicons name="document-text" size={24} color="#3b82f6" />
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
+                Keep Documents Safe
+              </Text>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Emergency Kit Checklist */}
+        <Box className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+          <Heading className="text-xl font-bold text-gray-800 mb-4">
+            Emergency Kit Checklist
+          </Heading>
+          <Box className="bg-gray-50 p-4 rounded-xl">
+            {[
+              "Water (1 gallon per person per day)",
+              "Non-perishable food (3-day supply)",
+              "First aid kit",
+              "Flashlight with extra batteries",
+              "Portable radio",
+              "Medications (7-day supply)",
+              "Personal hygiene items",
+              "Multi-tool",
+              "Emergency blankets",
+              "Important documents copies",
+              "Cash",
+              "Phone charger & power bank"
+            ].map((item, index) => (
+              <Box key={index} className="flex-row items-center mb-2">
+                <Ionicons name="square-outline" size={20} color="#6b7280" />
+                <Text className="text-gray-700 ml-3 flex-1">
+                  {item}
+                </Text>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

@@ -1,4 +1,3 @@
-// Import NativeWind setup FIRST - before any other imports
 import "@/nativewind-setup";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import "@/global.css";
@@ -17,6 +16,7 @@ import { queryClient } from "@/lib/query-client";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { useAuthStore } from "@/stores/auth-store";
 import { notificationService } from "@/lib/notifications/notification-service";
+import { FloatingAssistantButton } from "@/components/FloatingAssistantButton";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -35,14 +35,12 @@ export default function RootLayout() {
   });
   const [stylesReady, setStylesReady] = useState(false);
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      // Additional small delay to ensure NativeWind styles are fully processed
       setTimeout(() => {
         setStylesReady(true);
       }, 50);
@@ -55,7 +53,6 @@ export default function RootLayout() {
     }
   }, [loaded, stylesReady]);
 
-  // Don't render until fonts and styles are ready
   if (!loaded || !stylesReady) {
     return null;
   }
@@ -93,7 +90,7 @@ function RootLayoutNav() {
     const reRegisterPushToken = async () => {
       // Get existing token if any
       const existingToken = notificationService.getRegisteredToken();
-      
+
       if (existingToken) {
         // Re-register with new auth state (authenticated or unauthenticated)
         try {
@@ -116,13 +113,17 @@ function RootLayoutNav() {
 
   return (
     <LanguageProvider>
-      <GluestackUIProvider mode={colorMode}>
-        <ThemeProvider value={colorMode === "dark" ? DarkTheme : DefaultTheme}>
-          <QueryClientProvider client={queryClient}>
-            <Slot />
-          </QueryClientProvider>
-        </ThemeProvider>
-      </GluestackUIProvider>
+      <FloatingAssistantButton>
+        <GluestackUIProvider mode={colorMode}>
+          <ThemeProvider
+            value={colorMode === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <QueryClientProvider client={queryClient}>
+              <Slot />
+            </QueryClientProvider>
+          </ThemeProvider>
+        </GluestackUIProvider>
+      </FloatingAssistantButton>
     </LanguageProvider>
   );
 }

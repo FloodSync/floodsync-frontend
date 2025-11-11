@@ -1,66 +1,32 @@
-import React from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
-import { WebView } from "react-native-webview";
+import React, { useRef } from 'react';
+import { 
+  Text, 
+  ScrollView, 
+  TouchableOpacity,
+  Dimensions,
+  SafeAreaView 
+} from "react-native";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { WebView } from 'react-native-webview';
+
+const { height } = Dimensions.get('window');
 
 const MapScreen = () => {
+  const webViewRef = useRef(null);
+
   const html = `
 <!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      body, html { margin:0; padding:0; height:100%; }
-      #map { width:100%; height:100vh; }
-      .info-panel {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        background: white;
-        border: 2px solid #333;
-        border-radius: 10px;
-        padding: 10px 15px;
-        font-family: 'Comic Sans MS', cursive;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        width: 220px;
-        display: none;
-        transition: all 0.3s ease;
-      }
-      .chart-container {
-        width: 100%;
-        height: 100px;
-      }
-      .legend {
-        font-size: 12px;
-      }
-      .legend div {
-        margin-bottom: 4px;
-      }
-      .legend span {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        margin-right: 5px;
-      }
-      ul {
-        margin: 0;
-        padding-left: 20px;
-      }
-      .city-label {
-        font-weight: bold;
-        color: #333;
-        background: rgba(255,255,255,0.7);
-        border-radius: 5px;
-        padding: 2px 4px;
-        cursor: pointer;
-      }
+      body, html { margin:0; padding:0; height:100%; width:100%; }
+      #map { width:100%; height:100%; }
       
-      /* NEW STYLES ADDED FOR ENHANCED INFO BOX */
       .enhanced-info-panel {
         position: absolute;
         top: 20px;
@@ -110,16 +76,14 @@ const MapScreen = () => {
       .status-tag {
         padding: 3px 10px;
         border-radius: 15px;
-        font-size: 11px;
-        font-weight: bold;
+        font-size: 9px;
         text-transform: uppercase;
       }
       
       .status-unsafe { background: #e74c3c; color: white; }
-      .status-safe { background: #2ecc71; color: white; }
+      .status-safe { background: #f39c12; color: white; }
       .status-noresponse { background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; }
       
-      /* NEW: Smaller Pie Chart Styles */
       .pie-chart-section {
         margin: 12px 0;
         padding: 12px;
@@ -138,7 +102,7 @@ const MapScreen = () => {
       
       .pie-chart-container {
         width: 100%;
-        height: 120px;
+        height: 100px;
         position: relative;
         margin: 8px 0;
       }
@@ -210,40 +174,117 @@ const MapScreen = () => {
         background: #ecf0f1;
         color: #e74c3c;
       }
+
+      .city-label {
+        font-weight: bold;
+        color: #333;
+        background: rgba(255,255,255,0.7);
+        border-radius: 5px;
+        padding: 2px 4px;
+        cursor: pointer;
+      }
+
+      .map-legend {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border: 1px solid #2c3e50;
+        border-radius: 10px;
+        padding: 15px;
+        font-family: 'Arial', sans-serif;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 1000;
+        min-width: 90px;
+      }
+
+      .map-legend-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 5px;
+      }
+
+      .map-legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #34495e;
+      }
+
+      .map-legend-circle {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+
+      .map-legend-circle.high-risk {
+        background: red;
+        border-color: darkred;
+      }
+
+      .map-legend-circle.moderate-risk {
+        background: orange;
+        border-color: darkorange;
+      }
+
+      @keyframes pulse {
+        0% {
+          r: 50000;
+          opacity: 0.3;
+        }
+        50% {
+          r: 60000;
+          opacity: 0.15;
+        }
+        100% {
+          r: 50000;
+          opacity: 0.3;
+        }
+      }
+
+      @keyframes ripple {
+        0% {
+          r: 50000;
+          opacity: 0.4;
+        }
+        100% {
+          r: 80000;
+          opacity: 0;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
 
-    <div class="info-panel" id="infoPanel">
-      <strong id="cityName"></strong><br>
-      <span id="locals"></span>
-      <div class="chart-container">
-        <canvas id="pieChart"></canvas>
+    <div class="map-legend">
+      <div class="map-legend-title">Risk Levels</div>
+      <div class="map-legend-item">
+        <div class="map-legend-circle high-risk"></div>
+        <span>High Risk</span>
       </div>
-      <div class="legend">
-        <div><span style="background:#e74c3c"></span>unsafe</div>
-        <div><span style="background:#2ecc71"></span>safe</div>
-        <div><span style="background:#ecf0f1; border:1px solid #999"></span>no response</div>
+      <div class="map-legend-item">
+        <div class="map-legend-circle moderate-risk"></div>
+        <span>Moderate Risk</span>
       </div>
-      <hr/>
-      <strong>required items:</strong>
-      <ul id="itemsList"></ul>
     </div>
-    
-    <!-- NEW ENHANCED INFO BOX -->
+
     <div class="enhanced-info-panel" id="enhancedInfoPanel">
       <button class="close-btn" onclick="closeEnhancedInfo()">×</button>
       <div class="city-header" id="enhancedCityName">City Name</div>
       <div class="locals-count" id="enhancedLocals">aprx total Locals: 1000</div>
       
       <div class="status-tags">
-        <span class="status-tag status-unsafe">unsafe</span>
-        <span class="status-tag status-safe">safe</span>
+        <span class="status-tag status-unsafe">High risk</span>
+        <span class="status-tag status-safe">Moderate risk</span>
         <span class="status-tag status-noresponse">no response</span>
       </div>
       
-      <!-- NEW: Smaller Pie Chart Section -->
       <div class="pie-chart-section">
         <div class="pie-chart-title">Safety Status</div>
         <div class="pie-chart-container">
@@ -252,11 +293,11 @@ const MapScreen = () => {
         <div class="pie-chart-legend">
           <div class="legend-item">
             <div class="legend-color" style="background: #e74c3c"></div>
-            <span>Unsafe</span>
+            <span>High risk</span>
           </div>
           <div class="legend-item">
-            <div class="legend-color" style="background: #2ecc71"></div>
-            <span>Safe</span>
+            <div class="legend-color" style="background: #f39c12"></div>
+            <span>Moderate risk</span>
           </div>
           <div class="legend-item">
             <div class="legend-color" style="background: #ecf0f1; border: 1px solid #bdc3c7"></div>
@@ -266,220 +307,409 @@ const MapScreen = () => {
       </div>
       
       <div class="required-section">
-        <div class="section-title">required items</div>
+        <div class="section-title">Required Items</div>
         <ul class="items-list" id="enhancedItemsList">
-          <li>bla bla</li>
-          <li>bla bla</li>
-          <li>bla bla</li>
-          <li>bla bla</li>
+          <li>Loading items...</li>
         </ul>
       </div>
     </div>
 
     <script>
-      var map = L.map('map').setView([20.5, 96.2], 6);
+  var map = L.map('map', {
+    attributionControl: false
+  }).setView([20.5, 96.2], 6);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-      }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: ''
+  }).addTo(map);
 
-      var cities = [
-        { name: 'Yangon', coords: [16.8661, 96.1951], status: 'unsafe', locals: 1500, items: ['water', 'rice', 'blankets'] },
-        { name: 'Mandalay', coords: [21.9587, 96.0891], status: 'unsafe', locals: 1200, items: ['food', 'medicine', 'fuel'] },
-        { name: 'Naypyidaw', coords: [19.7633, 96.0785], status: 'safe', locals: 800, items: ['medical aid', 'tents'] },
-        { name: 'Bago', coords: [17.3349, 96.5063], status: 'unsafe', locals: 1000, items: ['clothes', 'water', 'flashlights'] },
-        { name: 'Taunggyi', coords: [20.7899, 97.0332], status: 'safe', locals: 900, items: ['first aid', 'rice'] }
-      ];
+  var cities = [
+    { name: 'Yangon', coords: [16.8661, 96.1951], status: 'High risk', locals: 1500, items: ['water', 'rice', 'blankets', 'medical kits'] },
+    { name: 'Mandalay', coords: [21.9587, 96.0891], status: 'High risk', locals: 1200, items: ['food', 'medicine', 'fuel', 'emergency shelters'] },
+    { name: 'Naypyidaw', coords: [19.7633, 96.0785], status: 'Moderate risk', locals: 800, items: ['medical aid', 'tents', 'clean water'] },
+    { name: 'Bago', coords: [17.3349, 96.5063], status: 'Moderate risk', locals: 1000, items: ['clothes', 'water', 'flashlights', 'first aid'] },
+    { name: 'Taunggyi', coords: [20.7899, 97.0332], status: 'Moderate risk', locals: 900, items: ['first aid', 'rice', 'emergency blankets'] }
+  ];
 
-      var chart; // reference to Chart.js instance for original panel
-      var enhancedChart; // NEW: reference for enhanced panel chart
+  var animatedCircles = [];
+  var enhancedChart;
 
-      cities.forEach(city => {
-        var color = city.status === 'safe' ? 'green' : 'red';
-        // Circle zone
-        var circle = L.circle(city.coords, {
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.3,
-          radius: 50000
-        }).addTo(map);
-        
-        // Marker for click area
-        var marker = L.marker(city.coords, { opacity: 0 });
-        marker.addTo(map);
-        
-        // Tooltip label (on marker)
-        marker.bindTooltip(city.name, { permanent: true, direction: 'center', className: 'city-label' });
+  cities.forEach(city => {
+    var color = city.status === 'Moderate risk' ? 'orange' : 'red';
 
-        // Click both circle and marker
-        circle.on('click', () => showInfo(city));
-        marker.on('click', () => showInfo(city));
-      });
+    // Main circle - make sure it's on top and fully clickable
+    var circle = L.circle(city.coords, {
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.3,
+      radius: 50000,
+      className: 'animated-circle',
+      interactive: true,
+      bubblingMouseEvents: true
+    }).addTo(map);
 
-      function showInfo(city) {
-        var panel = document.getElementById('infoPanel');
-        document.getElementById('cityName').innerHTML = city.name + ", bla bla";
-        document.getElementById('locals').innerHTML = "aprx total Locals: " + city.locals;
+    // Create ripple effect circles - make sure they don't block clicks
+    var ripple1 = L.circle(city.coords, {
+      color: color,
+      fillColor: 'transparent',
+      weight: 2,
+      opacity: 0.4,
+      radius: 50000,
+      className: 'ripple-circle',
+      interactive: false,
+      bubblingMouseEvents: false
+    }).addTo(map);
 
-        // Populate list
-        var itemsList = document.getElementById('itemsList');
-        itemsList.innerHTML = "";
-        city.items.forEach(i => {
-          var li = document.createElement('li');
-          li.textContent = i;
-          itemsList.appendChild(li);
+    var ripple2 = L.circle(city.coords, {
+      color: color,
+      fillColor: 'transparent',
+      weight: 2,
+      opacity: 0.4,
+      radius: 50000,
+      className: 'ripple-circle',
+      interactive: false,
+      bubblingMouseEvents: false
+    }).addTo(map);
+
+    // Bring main circle to front to ensure it receives clicks
+    circle.bringToFront();
+
+    animatedCircles.push({
+      main: circle,
+      ripples: [ripple1, ripple2],
+      color: color,
+      coords: city.coords
+    });
+
+    // Marker for click area - make it more visible for debugging
+    var marker = L.marker(city.coords, { 
+      opacity: 0.1,
+      interactive: true 
+    });
+    marker.addTo(map);
+
+    marker.bindTooltip(city.name, { 
+      permanent: true, 
+      direction: 'center', 
+      className: 'city-label',
+      interactive: true 
+    });
+
+    // Add click events with better debugging
+    circle.on('click', function(e) {
+      console.log('Circle clicked:', city.name);
+      e.originalEvent.stopPropagation();
+      showEnhancedInfo(city);
+    });
+
+    marker.on('click', function(e) {
+      console.log('Marker clicked:', city.name);
+      e.originalEvent.stopPropagation();
+      showEnhancedInfo(city);
+    });
+
+    // Also add click to the tooltip itself
+    setTimeout(() => {
+      var tooltip = marker.getElement()?.querySelector('.leaflet-tooltip');
+      if (tooltip) {
+        tooltip.style.pointerEvents = 'auto';
+        tooltip.addEventListener('click', function(e) {
+          console.log('Tooltip clicked:', city.name);
+          e.stopPropagation();
+          showEnhancedInfo(city);
         });
-
-        // Show panel
-        panel.style.display = 'block';
-
-        // Update Chart
-        const ctx = document.getElementById('pieChart');
-        if (chart) chart.destroy();
-        chart = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: ['Unsafe', 'Safe', 'No response'],
-            datasets: [{
-              data: [
-                city.status === 'unsafe' ? 70 : 10,
-                city.status === 'safe' ? 70 : 20,
-                10
-              ],
-              backgroundColor: ['#e74c3c', '#2ecc71', '#ecf0f1'],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            plugins: { legend: { display: false } },
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-        
-        // NEW CODE: Show enhanced info box
-        showEnhancedInfo(city);
       }
-      
-      // NEW FUNCTION: Show enhanced info box
-      function showEnhancedInfo(city) {
-        var enhancedPanel = document.getElementById('enhancedInfoPanel');
-        document.getElementById('enhancedCityName').textContent = city.name;
-        document.getElementById('enhancedLocals').textContent = "aprx total Locals: " + city.locals;
-        
-        // Update status tags based on city status
-        var statusTags = document.querySelectorAll('.status-tag');
-        statusTags.forEach(tag => {
-          tag.style.opacity = '0.3';
-        });
-        
-        if (city.status === 'unsafe') {
-          document.querySelector('.status-unsafe').style.opacity = '1';
-        } else if (city.status === 'safe') {
-          document.querySelector('.status-safe').style.opacity = '1';
-        }
-        document.querySelector('.status-noresponse').style.opacity = '1';
-        
-        // Populate items list
-        var enhancedItemsList = document.getElementById('enhancedItemsList');
-        enhancedItemsList.innerHTML = "";
-        city.items.forEach(item => {
-          var li = document.createElement('li');
-          li.textContent = item;
-          enhancedItemsList.appendChild(li);
-        });
-        
-        // NEW: Create enhanced pie chart
-        createEnhancedPieChart(city);
-        
-        // Show the enhanced panel
-        enhancedPanel.style.display = 'block';
-      }
-      
-      // NEW FUNCTION: Create enhanced pie chart
-      function createEnhancedPieChart(city) {
-        const enhancedCtx = document.getElementById('enhancedPieChart');
-        
-        // Destroy existing chart if it exists
-        if (enhancedChart) {
-          enhancedChart.destroy();
-        }
-        
-        // Calculate data based on city status
-        let unsafeData, safeData;
-        if (city.status === 'unsafe') {
-          unsafeData = 70;
-          safeData = 20;
-        } else if (city.status === 'safe') {
-          unsafeData = 10;
-          safeData = 70;
-        } else {
-          unsafeData = 30;
-          safeData = 30;
-        }
-        
-        enhancedChart = new Chart(enhancedCtx, {
-          type: 'pie',
-          data: {
-            labels: ['Unsafe', 'Safe', 'No Response'],
-            datasets: [{
-              data: [unsafeData, safeData, 10],
-              backgroundColor: ['#e74c3c', '#2ecc71', '#ecf0f1'],
-              borderColor: ['#c0392b', '#27ae60', '#bdc3c7'],
-              borderWidth: 1,
-              hoverOffset: 8
-            }]
+    }, 100);
+  });
+
+  function showEnhancedInfo(city) {
+    console.log('Showing info for:', city.name);
+    var enhancedPanel = document.getElementById('enhancedInfoPanel');
+    document.getElementById('enhancedCityName').textContent = city.name;
+    document.getElementById('enhancedLocals').textContent = "Approx total Locals: " + city.locals;
+    
+    var statusTags = document.querySelectorAll('.status-tag');
+    statusTags.forEach(tag => {
+      tag.style.opacity = '0.3';
+    });
+    
+    if (city.status === 'High risk') {
+      document.querySelector('.status-unsafe').style.opacity = '1';
+    } else if (city.status === 'Moderate risk') {
+      document.querySelector('.status-safe').style.opacity = '1';
+    }
+    document.querySelector('.status-noresponse').style.opacity = '1';
+    
+    var enhancedItemsList = document.getElementById('enhancedItemsList');
+    enhancedItemsList.innerHTML = "";
+    city.items.forEach(item => {
+      var li = document.createElement('li');
+      li.textContent = item;
+      enhancedItemsList.appendChild(li);
+    });
+    
+    createEnhancedPieChart(city);
+    enhancedPanel.style.display = 'block';
+  }
+  
+  function createEnhancedPieChart(city) {
+    const enhancedCtx = document.getElementById('enhancedPieChart');
+    
+    if (enhancedChart) {
+      enhancedChart.destroy();
+    }
+    
+    let unsafeData, safeData;
+    if (city.status === 'High risk') {
+      unsafeData = 70;
+      safeData = 20;
+    } else if (city.status === 'Moderate risk') {
+      unsafeData = 10;
+      safeData = 70;
+    } else {
+      unsafeData = 30;
+      safeData = 30;
+    }
+    
+    enhancedChart = new Chart(enhancedCtx, {
+      type: 'pie',
+      data: {
+        labels: ['High risk', 'Moderate risk', 'No Response'],
+        datasets: [{
+          data: [unsafeData, safeData, 10],
+          backgroundColor: ['#e74c3c', '#f39c12', '#ecf0f1'],
+          borderColor: ['#c0392b', '#e67e22', '#bdc3c7'],
+          borderWidth: 1,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const label = context.label || '';
-                    const value = context.raw || 0;
-                    return \`\${label}: \${value}%\`;
-                  }
-                }
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                return label + ': ' + value + '%';
               }
-            },
-            animation: {
-              animateScale: true,
-              animateRotate: true,
-              duration: 800
             }
           }
-        });
+        },
+        animation: {
+          animateScale: true,
+          animateRotate: true,
+          duration: 800
+        }
       }
-      
-      // NEW FUNCTION: Close enhanced info box
-      function closeEnhancedInfo() {
-        var enhancedPanel = document.getElementById('enhancedInfoPanel');
-        enhancedPanel.style.display = 'none';
-      }
-      
-      // NEW: Close enhanced info when clicking on map
-      map.on('click', function() {
-        closeEnhancedInfo();
+    });
+  }
+  
+  function closeEnhancedInfo() {
+    var enhancedPanel = document.getElementById('enhancedInfoPanel');
+    enhancedPanel.style.display = 'none';
+  }
+  
+  map.on('click', function(e) {
+    // Only close if clicking directly on map background
+    if (e.originalEvent.target === map.getContainer()) {
+      closeEnhancedInfo();
+    }
+  });
+
+  function animateCircles() {
+    animatedCircles.forEach((circleObj, index) => {
+      let pulsePhase = (Date.now() / 2000 + index * 0.3) % 1;
+      let pulseRadius = 50000 + Math.sin(pulsePhase * Math.PI * 2) * 5000;
+      let pulseOpacity = 0.3 + Math.sin(pulsePhase * Math.PI * 2) * 0.1;
+      circleObj.main.setRadius(pulseRadius);
+      circleObj.main.setStyle({ fillOpacity: pulseOpacity });
+
+      circleObj.ripples.forEach((ripple, rippleIndex) => {
+        let ripplePhase = (Date.now() / 3000 + index * 0.3 + rippleIndex * 0.5) % 1;
+        let rippleRadius = 50000 + ripplePhase * 30000;
+        let rippleOpacity = 0.4 * (1 - ripplePhase);
+        ripple.setRadius(rippleRadius);
+        ripple.setStyle({ opacity: rippleOpacity });
       });
-    </script>
+    });
+
+    requestAnimationFrame(animateCircles);
+  }
+
+  animateCircles();
+
+  function showCityFromReactNative(cityName) {
+    var city = cities.find(c => c.name === cityName);
+    if (city) {
+      // Use flyTo for smoother animation with better performance
+      map.flyTo(city.coords, 7, {
+        duration: 1.5, // Slightly longer for smoother transition
+        easeLinearity: 0.25
+      });
+      
+      // Show the info panel after the animation completes
+      setTimeout(function() {
+        showEnhancedInfo(city);
+      }, 1600); // Match the animation duration + small buffer
+    }
+  }
+</script>
   </body>
 </html>
 `;
 
+  const citiesData = [
+    { 
+      name: 'Yangon', 
+      status: 'High risk', 
+      time: '4 mins ago',
+      locals: 1500,
+      waterLevel: '2.1m',
+      items: ['water', 'rice', 'blankets', 'medical kits']
+    },
+    { 
+      name: 'Mandalay', 
+      status: 'High risk', 
+      time: '6 mins ago',
+      locals: 1200,
+      waterLevel: '1.8m',
+      items: ['food', 'medicine', 'fuel', 'emergency shelters']
+    },
+    { 
+      name: 'Bago', 
+      status: 'Moderate risk', 
+      time: '8 mins ago',
+      locals: 1000,
+      waterLevel: '1.2m',
+      items: ['clothes', 'water', 'flashlights', 'first aid']
+    },
+    { 
+      name: 'Taunggyi', 
+      status: 'Moderate risk', 
+      time: '15 mins ago',
+      locals: 900,
+      waterLevel: '0.9m',
+      items: ['first aid', 'rice', 'emergency blankets']
+    },
+    { 
+      name: 'Naypyidaw', 
+      status: 'Moderate risk', 
+      time: '20 mins ago',
+      locals: 800,
+      waterLevel: '0.7m',
+      items: ['medical aid', 'tents', 'clean water']
+    }
+  ];
+
+  const sortedCities = [...citiesData].sort((a, b) => {
+    if (a.status === 'High risk' && b.status !== 'High risk') return -1;
+    if (a.status !== 'High risk' && b.status === 'High risk') return 1;
+    const timeA = parseInt(a.time);
+    const timeB = parseInt(b.time);
+    return timeA - timeB;
+  });
+
+  const handleCityClick = (city) => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`
+        showCityFromReactNative('${city.name}');
+        true;
+      `);
+    }
+  };
+
+  const getRiskColor = (status) => {
+    return status === 'High risk' ? '#e74c3c' : '#f39c12';
+  };
+
+  const getRiskBackground = (status) => {
+    return status === 'High risk' ? '#e74c3c' : '#f39c12';
+  };
+
+  const getBorderColor = (status) => {
+    return status === 'High risk' ? '#c0392b' : '#e67e22';
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <WebView originWhitelist={["*"]} source={{ html }} style={{ flex: 1 }} />
+    <SafeAreaView className="flex-1 bg-blue-50">
+      {/* Map Section */}
+      <Box className="h-1/2 bg-gray-100">
+        <WebView 
+          ref={webViewRef}
+          originWhitelist={['*']} 
+          source={{ html }} 
+          className="flex-1"
+        />
+      </Box>
+
+      {/* Cities Data Section */}
+      <Box className="flex-1 p-4 bg-white">
+        <Heading className="text-2xl font-bold text-gray-800 mb-4">
+          Flood Risk Areas
+        </Heading>
+        
+        <ScrollView 
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+        >
+          {sortedCities.map((city, index) => (
+            <TouchableOpacity 
+              key={index} 
+              className="bg-gray-50 rounded-xl p-4 mb-3 border-l-4 shadow-sm"
+              style={{ borderLeftColor: getBorderColor(city.status) }}
+              onPress={() => handleCityClick(city)}
+            >
+              <Box className="flex-row items-center">
+                {/* Risk Indicator */}
+                <Box 
+                  className="w-10 h-10 rounded-full justify-center items-center mr-3"
+                  style={{ backgroundColor: getRiskBackground(city.status) }}
+                >
+                  <Text className="text-white text-xs font-bold">
+                    {city.status === 'High risk' ? 'HIGH' : 'MOD'}
+                  </Text>
+                </Box>
+                
+                {/* City Details */}
+                <Box className="flex-1">
+                  <Text className="text-lg font-bold text-gray-800">
+                    {city.name}
+                  </Text>
+                  <Text className="text-gray-600 text-sm mb-1">
+                    {city.time}
+                  </Text>
+                  <Box className="flex-row gap-3">
+                    <Text className="text-gray-500 text-xs">
+                      👥 {city.locals} locals
+                    </Text>
+                    <Text className="text-gray-500 text-xs">
+                      🌊 {city.waterLevel}
+                    </Text>
+                  </Box>
+                </Box>
+                
+                {/* Status Badge */}
+                <Box 
+                  className="px-2 py-1 rounded-lg"
+                  style={{ backgroundColor: getRiskColor(city.status) }}
+                >
+                  <Text className="text-white text-xs font-bold uppercase">
+                    {city.status}
+                  </Text>
+                </Box>
+              </Box>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </Box>
     </SafeAreaView>
   );
 };
 
 export default MapScreen;
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-});
