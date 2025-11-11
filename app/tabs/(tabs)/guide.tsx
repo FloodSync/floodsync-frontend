@@ -1,15 +1,17 @@
 import React, { useState, useRef } from "react";
 import { 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  Text, 
   FlatList, 
   KeyboardAvoidingView, 
   Platform,
   ScrollView,
-  StatusBar
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView
 } from "react-native";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
 
 type Message = {
   id: string;
@@ -109,118 +111,70 @@ const Guide = () => {
   };
 
   const renderItem = ({ item }: { item: Message }) => (
-    <View style={{ 
-      marginVertical: 4, 
-      marginHorizontal: 16,
-      alignItems: item.sender === "user" ? "flex-end" : "flex-start" 
-    }}>
-      <View 
-        style={{
-          backgroundColor: item.sender === "user" ? "#3b82f6" : "#ffffff",
-          borderWidth: 1,
-          borderColor: item.sender === "user" ? "#3b82f6" : "#e5e7eb",
-          borderRadius: 20,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          maxWidth: "85%",
-          borderBottomRightRadius: item.sender === "user" ? 4 : 20,
-          borderBottomLeftRadius: item.sender === "user" ? 20 : 4,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 2,
-        }}
+    <Box className={`my-1 mx-4 ${item.sender === "user" ? "items-end" : "items-start"}`}>
+      <Box 
+        className={`rounded-2xl px-4 py-3 max-w-[85%] ${
+          item.sender === "user" 
+            ? "bg-blue-500 rounded-br-sm" 
+            : "bg-white border border-gray-200 rounded-bl-sm"
+        } shadow-sm`}
       >
-        <Text style={{
-          color: item.sender === "user" ? "#ffffff" : "#1f2937",
-          fontSize: 16,
-          lineHeight: 22,
-        }}>
+        <Text className={`text-base leading-6 ${
+          item.sender === "user" ? "text-white" : "text-gray-800"
+        }`}>
           {item.text}
         </Text>
-      </View>
-      <Text style={{
-        fontSize: 12,
-        marginTop: 4,
-        color: item.sender === "user" ? "#3b82f6" : "#6b7280",
-      }}>
+      </Box>
+      <Text className={`text-xs mt-1 ${
+        item.sender === "user" ? "text-blue-600" : "text-gray-500"
+      }`}>
         {item.sender === "user" ? "You" : "Flood Assistant"}
       </Text>
-    </View>
+    </Box>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
+    <SafeAreaView className="flex-1 bg-blue-50">
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
       
       {/* Header */}
-      {/* <View style={{
-        backgroundColor: "#ffffff",
-        paddingHorizontal: 24,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#e5e7eb",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-      }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View>
-            <Text style={{ fontSize: 24, fontWeight: "bold", color: "#111827" }}>
-              Flood Safety
-            </Text>
-            <Text style={{ color: "#6b7280", fontSize: 16, marginTop: 2 }}>
-              AI Assistant
-            </Text>
-          </View>
-        </View>
-      </View> */}
+      <Box className="bg-white px-6 py-4 border-b border-gray-200 shadow-sm">
+        <Box className="flex-row items-center justify-between">
+          <Box>
+            <Heading className="text-2xl font-bold text-gray-900">Flood Safety</Heading>
+            <Text className="text-gray-600 text-base mt-1">AI Assistant</Text>
+          </Box>
+        </Box>
+      </Box>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {/* Suggested Questions */}
-        <View style={{
-          backgroundColor: "#ffffff",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: "#f3f4f6",
-        }}>
-          <Text style={{ color: "#4b5563", fontSize: 14, fontWeight: "500", marginBottom: 8 }}>
-            Quick Questions
-          </Text>
+        <Box className="bg-white px-4 py-3 border-b border-gray-100">
+          <Text className="text-gray-600 text-sm font-medium mb-2">Quick Questions</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingRight: 16 }}
           >
-            {suggestedQuestions.map((question, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => handleQuickQuestion(question)}
-                style={{
-                  backgroundColor: "#dbeafe",
-                  borderWidth: 1,
-                  borderColor: "#93c5fd",
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  marginRight: 12,
-                }}
-              >
-                <Text style={{ color: "#1e40af", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
-                  {question}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <Box className="flex-row space-x-3">
+              {suggestedQuestions.map((question, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => handleQuickQuestion(question)}
+                  className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 active:bg-blue-100"
+                >
+                  <Text className="text-blue-700 text-sm font-semibold text-center">
+                    {question}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Box>
           </ScrollView>
-        </View>
+        </Box>
 
         {/* Chat Messages */}
         <FlatList
@@ -231,33 +185,15 @@ const Guide = () => {
           contentContainerStyle={{ paddingVertical: 16 }}
           showsVerticalScrollIndicator={false}
           inverted
-          style={{ flex: 1 }}
+          className="flex-1"
         />
 
         {/* Input Area */}
-        <View style={{
-          backgroundColor: "#ffffff",
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
-        }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
-            <View style={{
-              flex: 1,
-              backgroundColor: "#f3f4f6",
-              borderRadius: 20,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderWidth: 1,
-              borderColor: "#d1d5db",
-            }}>
+        <Box className="bg-white px-4 py-3 border-t border-gray-200">
+          <Box className="flex-row items-end space-x-3">
+            <Box className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 border border-gray-300">
               <TextInput
-                style={{ 
-                  color: "#111827", 
-                  fontSize: 16, 
-                  maxHeight: 80,
-                }}
+                className="text-gray-900 text-base max-h-20"
                 placeholder="Type your message..."
                 placeholderTextColor="#9ca3af"
                 value={input}
@@ -266,64 +202,35 @@ const Guide = () => {
                 maxLength={500}
                 textAlignVertical="center"
               />
-            </View>
+            </Box>
             <TouchableOpacity
-              style={{
-                backgroundColor: input.trim() ? "#3b82f6" : "#9ca3af",
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                alignItems: "center",
-                justifyContent: "center",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.2,
-                shadowRadius: 2,
-                elevation: 2,
-              }}
+              className={`w-12 h-12 rounded-full items-center justify-center shadow-sm ${
+                input.trim() ? "bg-blue-500 active:bg-blue-600" : "bg-gray-400"
+              }`}
               onPress={handleSend}
               disabled={!input.trim()}
             >
-              <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 18 }}>
-                ↑
-              </Text>
+              <Text className="text-white font-bold text-lg">↑</Text>
             </TouchableOpacity>
-          </View>
+          </Box>
           
           {/* Character count */}
           {input.length > 0 && (
-            <Text style={{ color: "#9ca3af", fontSize: 12, textAlign: "right", marginTop: 8 }}>
+            <Text className="text-gray-400 text-xs text-right mt-2">
               {input.length}/500
             </Text>
           )}
-        </View>
+        </Box>
       </KeyboardAvoidingView>
 
       {/* Emergency Button */}
       <TouchableOpacity
-        style={{
-          position: "absolute",
-          bottom: 100,
-          right: 24,
-          backgroundColor: "#dc2626",
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
+        className="absolute bottom-24 right-6 bg-red-500 w-16 h-16 rounded-full items-center justify-center shadow-xl active:bg-red-600"
         onPress={() => handleQuickQuestion("EMERGENCY: Need immediate help!")}
       >
-        <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 12, textAlign: "center" }}>
-          SOS
-        </Text>
+        <Text className="text-white font-bold text-center text-xs">SOS</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 

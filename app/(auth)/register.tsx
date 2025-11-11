@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { SafeAreaView, Text, TextInput, TouchableOpacity, ScrollView, Pressable } from "react-native";
+import { Text, TextInput, TouchableOpacity, ScrollView, Pressable } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Register = () => {
   const [name, setName] = useState("");

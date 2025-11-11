@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
 import {
-  SafeAreaView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons"; 
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Login = () => {
   const [email, setEmail] = useState("");
