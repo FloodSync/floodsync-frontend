@@ -329,7 +329,6 @@ export const GuideModal: React.FC<GuideModalProps> = ({ onClose }) => {
         );
         aiResponseText = response.response;
       } else {
-        // Text only
         const response = await aiChatApi.sendTextMessage(userInput);
         aiResponseText = response.response;
       }
