@@ -4,10 +4,12 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Box } from "@/components/ui/box";
-import { Pressable } from "react-native";
+import { Pressable, Alert } from "react-native";
 import { AlertCircle, X } from "lucide-react-native";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Motion, AnimatePresence } from "@legendapp/motion";
+import { useAuthStore } from "@/stores/auth-store";
+import { safetyApi } from "@/lib/api/safety";
 
 interface FloodSafetyCheckProps {
   floodRisk: number;
@@ -30,6 +32,7 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
   onResponseSubmitted,
 }) => {
   const { t } = useLanguage();
+  const { user, token, isAuthenticated } = useAuthStore();
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasCheckedRisk, setHasCheckedRisk] = useState(false);
@@ -99,33 +102,28 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
   };
 
   const submitSafetyStatus = async (isSafe: boolean) => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !token || !user) {
+      Alert.alert(
+        "Authentication Required",
+        "Please log in to submit your safety status."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Convert boolean to API status format
+      const status: "safe" | "not_safe" = isSafe ? "safe" : "not_safe";
 
-      const response = await fetch(`${API_BASE_URL}/api/safety-status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          isSafe,
-          floodRisk,
-          location,
-          timestamp: new Date().toISOString(),
-        }),
-        signal: controller.signal,
-      });
+      // Call the API
+      const response = await safetyApi.submitSafetyStatus(
+        token,
+        user._id,
+        status
+      );
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Safety status submitted:", data);
+      console.log("Safety status submitted:", response);
 
       // Call the callback if provided
       if (onResponseSubmitted) {
@@ -147,8 +145,11 @@ const FloodSafetyCheck: React.FC<FloodSafetyCheckProps> = ({
         }
         setIsVisible(false);
       } else {
-        // In production, you might want to show an error message to the user
-        // For now, we'll keep the notification visible so user can retry
+        // Show error alert in production
+        Alert.alert(
+          "Error",
+          error.message || "Failed to submit safety status. Please try again."
+        );
       }
     } finally {
       setIsSubmitting(false);
