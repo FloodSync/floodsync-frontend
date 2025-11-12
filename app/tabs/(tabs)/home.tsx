@@ -30,7 +30,11 @@ import {
   usePrecipitation,
 } from "@/hooks/use-weather";
 import { useFloodNotifications } from "@/hooks/use-flood-notifications";
-import { APP_CONFIG, isDemoMode, getDemoFloodRisk } from "@/lib/config/app-config";
+import {
+  APP_CONFIG,
+  isDemoMode,
+  getDemoFloodRisk,
+} from "@/lib/config/app-config";
 
 const getWeatherCondition = (code: number, isDay: number): string => {
   if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
@@ -124,7 +128,7 @@ export default function HomeScreen() {
     if (isDemoMode()) {
       return getDemoFloodRisk();
     }
-    
+
     // Use real API data
     if (floodQuery.data?.current?.flood_risk !== undefined) {
       return Math.round(floodQuery.data.current.flood_risk);
@@ -136,7 +140,9 @@ export default function HomeScreen() {
   useFloodNotifications({
     floodRisk,
     location: userLocation,
-    enabled: isDemoMode() || (!locationLoading && !floodQuery.isLoading && floodRisk > 0),
+    enabled:
+      isDemoMode() ||
+      (!locationLoading && !floodQuery.isLoading && floodRisk > 0),
   });
 
   const weatherData = useMemo(() => {
@@ -166,8 +172,6 @@ export default function HomeScreen() {
       showers: current.showers || 0,
     };
   }, [weatherQuery.data]);
-
-  console.log("weatherData", weatherData);
 
   const precipitationData = useMemo(() => {
     // Use demo data if demo mode is enabled
