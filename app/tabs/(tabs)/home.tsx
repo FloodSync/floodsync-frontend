@@ -237,7 +237,7 @@ export default function HomeScreen() {
   const handleLoginPress = useCallback(() => {
     // Handle login navigation - will be implemented later
     console.log("Login pressed");
-    router.push("/(auth)/profile");
+    router.push("/(auth)/login");
   }, []);
 
   const handleProfilePress = useCallback(() => {
