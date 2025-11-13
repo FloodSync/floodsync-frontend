@@ -25,10 +25,8 @@ export const useFloodNotifications = ({
   useEffect(() => {
     if (!enabled) return;
 
-    // Request permissions on mount
     notificationService.requestPermissions();
 
-    // Set up notification listeners
     notificationListenerRef.current =
       Notifications.addNotificationReceivedListener((notification) => {
         console.log("Notification received:", notification);
@@ -37,10 +35,8 @@ export const useFloodNotifications = ({
     responseListenerRef.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         console.log("Notification response:", response);
-        // Handle notification tap - could navigate to specific screen
         const data = response.notification.request.content.data;
         if (data?.type === "flood_alert") {
-          // Could navigate to flood details or safety check
         }
       });
 
@@ -57,9 +53,7 @@ export const useFloodNotifications = ({
   useEffect(() => {
     if (!enabled) return;
 
-    // Only send notification when risk crosses 70% threshold
     if (floodRisk > 70) {
-      // Check if we've already notified for this risk level
       if (lastNotifiedRiskRef.current !== floodRisk) {
         const title = t("floodAlertTitle");
         const body = t("floodAlertMessage")
@@ -75,7 +69,6 @@ export const useFloodNotifications = ({
         lastNotifiedRiskRef.current = floodRisk;
       }
     } else {
-      // Reset when risk drops below 70%
       lastNotifiedRiskRef.current = null;
     }
   }, [floodRisk, location, enabled, t]);

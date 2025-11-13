@@ -1,9 +1,18 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { MapPin, Home, Bell } from "lucide-react-native";
+import { Platform } from "react-native";
 
-function TabBarIcon({ Icon, color }: { Icon: any; color: string }) {
-  return <Icon size={24} color={color} />;
+function TabBarIcon({
+  Icon,
+  color,
+  focused,
+}: {
+  Icon: any;
+  color: string;
+  focused: boolean;
+}) {
+  return <Icon size={24} color={color} strokeWidth={focused ? 2.5 : 2} />;
 }
 
 export default function TabLayout() {
@@ -18,8 +27,8 @@ export default function TabLayout() {
           backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
           borderTopColor: "#E5E7EB",
-          height: 70,
-          paddingBottom: 8,
+          height: Platform.OS === "ios" ? 85 : 70,
+          paddingBottom: Platform.OS === "ios" ? 20 : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
@@ -36,21 +45,27 @@ export default function TabLayout() {
         name="map"
         options={{
           title: "Map",
-          tabBarIcon: ({ color }) => <TabBarIcon Icon={MapPin} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon Icon={MapPin} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon Icon={Home} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon Icon={Home} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="noti"
         options={{
-          title: "Noti",
-          tabBarIcon: ({ color }) => <TabBarIcon Icon={Bell} color={color} />,
+          title: "Notifications",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon Icon={Bell} color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>

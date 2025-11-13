@@ -4,7 +4,6 @@ import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { notificationsApi } from "@/lib/api/notifications";
 
-// Configure how notifications are handled when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -43,7 +42,6 @@ class NotificationService {
         return false;
       }
 
-      // Configure notification channel for Android
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("flood-alerts", {
           name: "Flood Alerts",
@@ -70,13 +68,11 @@ class NotificationService {
     title?: string,
     body?: string
   ): Promise<void> {
-    // Only send notification if risk > 70% and we haven't notified for this risk level yet
     if (floodRisk <= 70) {
       this.lastNotifiedRisk = null;
       return;
     }
 
-    // Don't send duplicate notifications for the same risk level
     if (this.lastNotifiedRisk === floodRisk) {
       return;
     }

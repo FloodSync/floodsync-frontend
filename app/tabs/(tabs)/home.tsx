@@ -98,24 +98,20 @@ export default function HomeScreen() {
   );
 
   const userLocation = useMemo(() => {
-    // Use demo location if demo mode is enabled
     if (isDemoMode()) {
       return APP_CONFIG.DEMO_DATA.location;
     }
 
-    // Use real location data
     if (isAuthenticated && user) {
       return `${user.city}, ${user.township}`;
     }
     if (coordinates?.city) {
-      // Show city, township if available, otherwise just city
       if (coordinates.township) {
         return `${coordinates.city}, ${coordinates.township}`;
       }
       return coordinates.city;
     }
     if (coordinates) {
-      // Fallback to coordinates if reverse geocoding failed
       return `${coordinates.latitude.toFixed(
         2
       )}, ${coordinates.longitude.toFixed(2)}`;
@@ -124,19 +120,15 @@ export default function HomeScreen() {
   }, [isAuthenticated, user, coordinates]);
 
   const floodRisk = useMemo(() => {
-    // Use demo data if demo mode is enabled
     if (isDemoMode()) {
       return getDemoFloodRisk();
     }
 
-    // Use real API data
     if (floodQuery.data?.current?.flood_risk !== undefined) {
       return Math.round(floodQuery.data.current.flood_risk);
     }
     return 0;
   }, [floodQuery.data]);
-
-  // Set up flood risk notifications
   useFloodNotifications({
     floodRisk,
     location: userLocation,
@@ -146,12 +138,10 @@ export default function HomeScreen() {
   });
 
   const weatherData = useMemo(() => {
-    // Use demo data if demo mode is enabled
     if (isDemoMode()) {
       return APP_CONFIG.DEMO_DATA.weather;
     }
 
-    // Use real API data
     if (!weatherQuery.data?.current) return null;
 
     const current = weatherQuery.data.current;
@@ -174,73 +164,47 @@ export default function HomeScreen() {
   }, [weatherQuery.data]);
 
   const precipitationData = useMemo(() => {
-    // Use demo data if demo mode is enabled
     if (isDemoMode()) {
       return APP_CONFIG.DEMO_DATA.precipitation;
     }
 
-    // Use real API data
     if (!precipitationQuery.data?.hourly) return null;
 
     const { time, precipitation } = precipitationQuery.data.hourly;
-
-    // The API returns exactly 48 hours: 24 past hours (indices 0-23) + 24 future hours (indices 24-47)
-    // The current hour is NOT included in the response
     const totalHours = precipitation.length;
 
     if (totalHours < 48) {
       console.warn("Expected 48 hours of data, got:", totalHours);
     }
 
-    // Last hour: the most recent past hour (index 23, which is the 24th hour from the past)
     const lastHourIndex = 23;
     const lastHour =
       lastHourIndex < precipitation.length
         ? precipitation[lastHourIndex] || 0
         : 0;
 
-    // Last 24 hours: sum of all past 24 hours (indices 0-23)
     const past24Hours = precipitation
       .slice(0, 24)
       .reduce((sum, val) => sum + (val || 0), 0);
 
-    // Next 24 hours forecast: sum of all future 24 hours (indices 24-47)
     const future24Hours = precipitation
       .slice(24, 48)
       .reduce((sum, val) => sum + (val || 0), 0);
 
-    const result = {
-      lastHour: Math.round(lastHour * 10) / 10, // Round to 1 decimal (in mm)
-      last24Hours: Math.round(past24Hours * 10) / 10, // Round to 1 decimal (in mm)
-      next24HoursForecast: Math.round(future24Hours * 10) / 10, // Round to 1 decimal (in mm)
+    return {
+      lastHour: Math.round(lastHour * 10) / 10,
+      last24Hours: Math.round(past24Hours * 10) / 10,
+      next24HoursForecast: Math.round(future24Hours * 10) / 10,
     };
-
-    console.log("Precipitation data (real from API):", {
-      lastHour: result.lastHour,
-      last24Hours: result.last24Hours,
-      next24HoursForecast: result.next24HoursForecast,
-      rawData: {
-        totalHours,
-        past24HoursSum: past24Hours,
-        future24HoursSum: future24Hours,
-        lastHourValue: precipitation[lastHourIndex],
-        samplePast: precipitation.slice(20, 24),
-        sampleFuture: precipitation.slice(24, 28),
-      },
-    });
-
-    return result;
   }, [precipitationQuery.data]);
 
   const getFloodRiskColor = (risk: number) => {
-    if (risk < 40) return "#10B981"; // Green
-    if (risk < 70) return "#F59E0B"; // Orange
-    return "#EF4444"; // Red
+    if (risk < 40) return "#10B981";
+    if (risk < 70) return "#F59E0B";
+    return "#EF4444";
   };
 
   const handleLoginPress = useCallback(() => {
-    // Handle login navigation - will be implemented later
-    console.log("Login pressed");
     router.push("/(auth)/login");
   }, []);
 
@@ -250,7 +214,6 @@ export default function HomeScreen() {
 
   const handleSafetyResponse = useCallback((isSafe: boolean) => {
     console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
-    // You can add additional logic here if needed
   }, []);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -338,7 +301,6 @@ export default function HomeScreen() {
           </HStack>
         </Box>
 
-        {/* Flood Risk Indicator */}
         <Box className="bg-white mb-4 mt-2 px-4 py-4 border-b border-gray-200">
           <HStack className="items-center justify-between mb-2">
             <Text
@@ -372,13 +334,11 @@ export default function HomeScreen() {
             )}
           </Box>
         </Box>
-        {/* Safety Check Notification - appears after successful API call when risk > 80 */}
         <FloodSafetyCheck
           floodRisk={floodRisk}
           location={userLocation}
           onResponseSubmitted={handleSafetyResponse}
         />
-        {/* Alert Messages (if needed) */}
         {!floodQuery.isLoading && floodRisk >= 70 && (
           <Box className="mx-4 mb-2  bg-orange-100 border-l-4 border-orange-500 rounded-lg p-4">
             <HStack space="sm" className="items-start">
@@ -427,7 +387,6 @@ export default function HomeScreen() {
           ) : null}
         </Box>
 
-        {/* Precipitation Analysis */}
         <Box className="bg-white px-4 mx-4 mt-4 rounded-xl py-4 mb-4">
           {precipitationQuery.isLoading || locationLoading ? (
             <VStack space="md" className="items-center py-8">

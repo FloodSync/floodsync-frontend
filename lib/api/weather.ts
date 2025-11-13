@@ -93,13 +93,11 @@ export const weatherApi = {
     city: string,
     country: string = "Myanmar"
   ): Promise<GeocodingResponse> => {
-    // Try with city and country first
     let url = `${OPEN_METEO_BASE}/geocoding?name=${encodeURIComponent(
       `${city}, ${country}`
     )}&count=5&language=en&format=json`;
 
     let response = await fetch(url);
-    console.log("geocode response", response);
     if (response.ok) {
       const data = await response.json();
       if (data.results && data.results.length > 0) {
@@ -107,13 +105,11 @@ export const weatherApi = {
       }
     }
 
-    // Fallback: try with just city name
     url = `${OPEN_METEO_BASE}/geocoding?name=${encodeURIComponent(
       city
     )}&count=5&language=en&format=json`;
     response = await fetch(url);
 
-    console.log("only city  response", response);
     if (!response.ok) {
       throw new Error("Geocoding failed");
     }
@@ -152,11 +148,8 @@ export const weatherApi = {
     latitude: number,
     longitude: number
   ): Promise<PrecipitationResponse> => {
-    // Get hourly data for past 24 hours and next 24 hours (48 hours total)
     const url = `${OPEN_METEO_BASE}/forecast?latitude=${latitude}&longitude=${longitude}&hourly=precipitation,rain,showers&past_hours=24&forecast_hours=24&precipitation_unit=mm&timezone=auto`;
     const response = await fetch(url);
-    console.log("url of the fetch data", url);
-    console.log("response of the fetch data", response);
     if (!response.ok) {
       throw new Error("Precipitation data fetch failed");
     }

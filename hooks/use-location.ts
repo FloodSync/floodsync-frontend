@@ -24,11 +24,9 @@ export const useLocation = () => {
         setLoading(true);
         setError(null);
 
-        // If user is logged in, always try to use their registered location
         if (isAuthenticated && user && user.city) {
           const cityName = user.city;
           
-          // Check if we have cached coordinates for this city
           const cached = cachedCoordinatesRef.current.get(cityName);
           if (cached) {
             setCoordinates(cached);
@@ -36,7 +34,6 @@ export const useLocation = () => {
             return;
           }
 
-          // First, try to find the city in our data file (most reliable)
           const cityData = myanmarCities.find(
             (c) => c.value.toLowerCase() === cityName.toLowerCase()
           );
@@ -49,18 +46,15 @@ export const useLocation = () => {
               township: user.township,
             };
             
-            // Cache the coordinates for this city
             cachedCoordinatesRef.current.set(cityName, userCoordinates);
             setCoordinates(userCoordinates);
             setLoading(false);
             return;
           }
 
-          // If not found in our data, try to geocode the user's city
           try {
             const geocodeResult = await weatherApi.geocode(cityName);
             if (geocodeResult.results && geocodeResult.results.length > 0) {
-              // Find the best match (prefer Myanmar results)
               const result = geocodeResult.results.find(
                 (r) => r.country === "Myanmar" || r.country === "MM"
               ) || geocodeResult.results[0];
@@ -72,7 +66,6 @@ export const useLocation = () => {
                 township: user.township,
               };
               
-              // Cache the coordinates for this city
               cachedCoordinatesRef.current.set(cityName, userCoordinates);
               setCoordinates(userCoordinates);
               setLoading(false);
@@ -80,15 +73,11 @@ export const useLocation = () => {
             }
           } catch (err) {
             console.warn("Geocoding failed for user city, falling back to GPS:", err);
-            // If geocoding fails, fall through to GPS as backup
           }
         }
-
-        // Only use GPS if user is not logged in OR if geocoding failed
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
           if (isAuthenticated && user) {
-            // If logged in but GPS denied, show error about geocoding failure
             setError("Unable to get location for your registered city. Please enable location access or check your city name.");
           } else {
             setError("Location permission is required to show weather data. Please enable location access in your device settings.");
@@ -101,7 +90,6 @@ export const useLocation = () => {
         const lat = location.coords.latitude;
         const lon = location.coords.longitude;
         
-        // Try reverse geocoding using expo-location first (more reliable)
         try {
           const reverseGeocode = await Location.reverseGeocodeAsync({
             latitude: lat,
@@ -123,7 +111,6 @@ export const useLocation = () => {
           console.warn("Expo reverse geocoding failed, trying API:", err);
         }
         
-        // Fallback: Try Open-Meteo reverse geocoding API
         try {
           const reverseGeocodeResult = await weatherApi.reverseGeocode(lat, lon);
           if (reverseGeocodeResult.results && reverseGeocodeResult.results.length > 0) {
@@ -140,8 +127,6 @@ export const useLocation = () => {
         } catch (err) {
           console.warn("API reverse geocoding failed, using coordinates:", err);
         }
-        
-        // If all reverse geocoding fails, just use coordinates
         setCoordinates({
           latitude: lat,
           longitude: lon,

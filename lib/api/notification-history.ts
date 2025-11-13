@@ -73,10 +73,6 @@ export interface NotificationHistoryParams {
 }
 
 export const notificationHistoryApi = {
-  /**
-   * Get notification history with pagination
-   * GET /api/v1/notifications
-   */
   getNotificationHistory: async (
     token: string,
     params?: NotificationHistoryParams
@@ -101,10 +97,6 @@ export const notificationHistoryApi = {
     );
   },
 
-  /**
-   * Get unread notification count
-   * GET /api/v1/notifications/unread-count
-   */
   getUnreadCount: async (token: string): Promise<UnreadCountResponse> => {
     return apiClient.authenticatedRequest<UnreadCountResponse>(
       "/notifications/unread-count",
@@ -115,10 +107,6 @@ export const notificationHistoryApi = {
     );
   },
 
-  /**
-   * Mark notification as read
-   * PATCH /api/v1/notifications/:notificationId/read
-   */
   markAsRead: async (
     token: string,
     notificationId: string
@@ -132,10 +120,6 @@ export const notificationHistoryApi = {
     );
   },
 
-  /**
-   * Mark all notifications as read
-   * PATCH /api/v1/notifications/read-all
-   */
   markAllAsRead: async (token: string): Promise<MarkAllReadResponse> => {
     return apiClient.authenticatedRequest<MarkAllReadResponse>(
       "/notifications/read-all",
@@ -146,10 +130,6 @@ export const notificationHistoryApi = {
     );
   },
 
-  /**
-   * Delete a notification
-   * DELETE /api/v1/notifications/:notificationId
-   */
   deleteNotification: async (
     token: string,
     notificationId: string
@@ -163,10 +143,6 @@ export const notificationHistoryApi = {
     );
   },
 
-  /**
-   * Poll for new notifications (long polling)
-   * GET /api/v1/notifications/poll
-   */
   pollNotifications: async (
     token: string,
     timeout?: number,
