@@ -254,7 +254,7 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
             <Box className="items-center">{getWeatherIcon()}</Box>
             <VStack space="xs" className="items-center">
               <Text
-                className="text-gray-900 text-4xl font-bold"
+                className="text-gray-900 text-3xl"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
                 {weatherData.temperature}°

@@ -7,13 +7,14 @@ import {
   Pressable,
   Alert,
   View,
+  SafeAreaView
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+// import { SafeAreaView } from "react-native-safe-area-context";
 
 const Profile = () => {
   const [name, setName] = useState("John Doe");

@@ -26,8 +26,6 @@ import { useLogout } from "@/hooks/use-auth";
 import { router } from "expo-router";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-
-// Add this before your component
 const videoThumbnails = {
   "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP": require("@/assets/images/flood-101-thumbnail.webp"),
   "https://youtu.be/cCZWkMXJwQE?si=QXsb-H7q5T1YvbM_": require("@/assets/images/risk-assessment-thumbnail.jpg"),
@@ -282,7 +280,7 @@ const getYouTubeVideoId = (url: string) => {
     <SafeAreaView className="flex-1 bg-blue-50">
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
         {/* Fixed Header - user's location, localization and profile icon */}
-        <Box className="bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm mb-6 mx-[-20px] ml-[-20px] mr-[-20px]">
+        <Box className="bg-white px-4 py-3 border border-gray-200 shadow-sm mb-6 mx-[-20px] ml-[-20px] mr-[-20px]">
           <HStack className="items-center justify-between w-full">
             <HStack className="flex-1 items-center" space="sm">
               <MapPin size={18} color="#3B82F6" />
