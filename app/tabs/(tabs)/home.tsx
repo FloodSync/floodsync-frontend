@@ -443,7 +443,7 @@ export default function HomeScreen() {
                     : "At Capacity",
                 alertMessage:
                   floodRisk >= 70
-                    ? "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation."
+                    ? t("alertMessage")
                     : undefined,
               }}
             />

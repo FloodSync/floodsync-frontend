@@ -166,6 +166,9 @@ export const translations = {
      importantDocumentsCopies: "Important documents copies",
      cash: "Cash",
      phoneChargerAndPowerBank: "Phone charger & power bank",
+
+     // alert message
+     alertMessage: "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation.",
   },
   
   my: {
@@ -217,7 +220,7 @@ export const translations = {
     floodDangerDescription: "သင်လက်ရှိ ဘယ်လောက်လုံခြုံသလဲ",
     lowRisk: "နည်း",
     moderateRisk: "အလယ်အလတ်",
-    highRisk: "မြင့်",
+    highRisk: "မြင့်မား",
     severeRisk: "ပြင်းထန်",
     risk: "အန္တရာယ်",
     basedOnForecast:
@@ -336,6 +339,9 @@ export const translations = {
       importantDocumentsCopies: "အရေးကြီးစာရွက်စာတမ်းများရဲ့မိတ္တူ",
       cash: "ပိုက်ဆံ",
       phoneChargerAndPowerBank: "ဖုန်းအားသွင်းကြိုးနှင့် ပါဝါဘဏ်",
+      
+      // alert message
+      alertMessage: "အခြေအနေများကို အနီးကပ်စောင့်ကြည့်ပါ။ နိမ့်ကျသောနေရာများကို ရှောင်ကြဉ်ပြီး ဖြစ်နိုင်ခြေရှိသော ဘေးလွတ်ရာသို့ ရွှေ့ပြောင်းရန် ပြင်ဆင်ထားပါ။",
   },
    
 };
