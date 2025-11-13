@@ -7,6 +7,7 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Image
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -45,42 +46,59 @@ const Login = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Heading className="text-blue-700 text-3xl font-bold mb-5 text-center">
-          Login
-        </Heading>
-
-        <Box className="mb-4">
-          <Text className="text-gray-700 mb-1">Email</Text>
-          <TextInput
-            className="bg-white p-3 rounded-2xl border border-gray-300"
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
+      <ScrollView 
+        contentContainerStyle={{ 
+          padding: 20,
+          flexGrow: 1,
+          justifyContent: 'center'
+        }}
+      >
+        {/* App Logo */}
+        <Box className="items-center mb-2">
+          <Image 
+            source={require('@/assets/images/logo.png')} 
+            className="w-[150px] h-[150px] "
           />
         </Box>
 
-        {/* Password with eye toggle */}
-        <Box className="mb-6 relative">
-          <Text className="text-gray-700 mb-1">Password</Text>
-          <TextInput
-            className="bg-white p-3 rounded-2xl border border-gray-300 pr-12"
-            placeholder="Enter your password"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <Pressable
-            onPress={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-9"
-          >
-            <Ionicons
-              name={showPassword ? "eye-off" : "eye"}
-              size={24}
-              color="gray"
+        <Heading className="text-blue-700 text-3xl font-bold mb-8 text-center">
+          Login Your Account
+        </Heading>
+
+        {/* Input Fields Container with extra top margin */}
+        <Box className="mt-2">
+          <Box className="mb-4">
+            <Text className="text-gray-700 mb-1">Email</Text>
+            <TextInput
+              className="bg-white p-3 rounded-2xl border border-gray-300"
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
             />
-          </Pressable>
+          </Box>
+
+          {/* Password with eye toggle */}
+          <Box className="mb-6 relative">
+            <Text className="text-gray-700 mb-1">Password</Text>
+            <TextInput
+              className="bg-white p-3 rounded-2xl border border-gray-300 pr-12"
+              placeholder="Enter your password"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Pressable
+              onPress={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-9"
+            >
+              <Ionicons
+                name={showPassword ? "eye-off" : "eye"}
+                size={24}
+                color="gray"
+              />
+            </Pressable>
+          </Box>
         </Box>
 
         <TouchableOpacity
@@ -98,12 +116,12 @@ const Login = () => {
           )}
         </TouchableOpacity>
 
-        <Text className="text-gray-600 text-center mt-4">
-          Don’t have an account?{" "}
-          <Pressable onPress={handleRegisterPress}>
-            <Text className="text-blue-600 font-semibold">Register</Text>
-          </Pressable>
-        </Text>
+       <Text className="text-gray-600 text-center mt-4">
+  Don't have an account?{" "}
+  <Text className="text-blue-600 font-semibold" onPress={handleRegisterPress}>
+    Register
+  </Text>
+</Text>
       </ScrollView>
     </SafeAreaView>
   );

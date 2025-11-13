@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Text,
   TouchableOpacity,
@@ -6,11 +6,26 @@ import {
   Pressable,
   Linking,
   Image,
+  View
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "@/components/ui/safe-area-view";
 import { Ionicons } from "@expo/vector-icons";
+import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
+import {
+  MapPin,
+  User,
+} from "lucide-react-native";
+import { APP_CONFIG, isDemoMode } from "@/lib/config/app-config";
+import { useAuthStore } from "@/stores/auth-store";
+import { useLocation } from "@/hooks/use-location";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLogout } from "@/hooks/use-auth";
+import { router } from "expo-router";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 
 // Add this before your component
 const videoThumbnails = {
@@ -40,6 +55,14 @@ const sectionColors = {
 
 const Guide = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
+  const { user, isAuthenticated } = useAuthStore();
+  const logoutMutation = useLogout();
+  const {
+      coordinates,
+      loading: locationLoading,
+      error: locationError,
+    } = useLocation();
+  const { t } = useLanguage();
 
   // Function to extract YouTube video ID from URL
 const getYouTubeVideoId = (url: string) => {
@@ -50,12 +73,12 @@ const getYouTubeVideoId = (url: string) => {
   const educationalContent = [
     {
       id: 1,
-      title: "Understanding Flood Risks",
+      title: t("understandingFloodRisks"),
       icon: "warning",
       color: "bg-red-500",
       videos: [
         {
-          title: "Flooding 101 - Understanding Flood Risk",
+          title: t("flooding101"),
           url: "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP",
           duration: "4:30"
         },
@@ -66,145 +89,145 @@ const getYouTubeVideoId = (url: string) => {
         }
       ],
       guidelines: [
-        "Know your area's flood risk level",
-        "Understand flash flood warnings",
-        "Identify flood-prone zones in your community",
-        "Monitor weather forecasts regularly"
+        t("knowYourAreasFloodRiskLevel"),
+        t("understandFlashFloodWarnings"),
+        t("identifyFloodZonesInYourCommunity"),
+        t("monitorWeatherForecastRegularly")
       ]
     },
     {
       id: 2,
-      title: "Emergency Preparedness",
+      title: t("emergencyPreparedness"),
       icon: "shield-checkmark",
       color: "bg-blue-500",
       videos: [
         {
-          title: "Emergency Preparedness: Floods",
+          title: t("emergencyPreparednessFlood"),
           url: "https://youtu.be/43M5mZuzHF8?si=bjAf3CwBrjvSiiX5",
           duration: "5:45"
         },
         {
-          title: "How to Prepare for a Flood",
+          title: t("howToPrepareForAFlood"),
           url: "https://youtu.be/pi_nUPcQz_A?si=nTaK05UGqVwQQYcI",
           duration: "7:20"
         }
       ],
       guidelines: [
-        "Create a 72-hour emergency kit",
-        "Establish family communication plan",
-        "Learn evacuation routes",
-        "Keep important documents waterproof",
-        "Practice evacuation drills quarterly"
+        t("create72hourEmergencyKit"),
+        t("establishmentFamilyCommunicationPlan"),
+        t("learnEvacuationRoutes"),
+        t("keepImportantDocumentsWaterProof"),
+        t("practiceEvacuationDrillsQuarterly")
       ]
     },
     {
       id: 3,
-      title: "During a Flood",
+      title: t("duringAFlood"),
       icon: "water",
       color: "bg-cyan-500",
       videos: [
         {
-          title: "What to Do During a Flood",
+          title: t("whatToDoDuringAFlood"),
           url: "https://youtu.be/rV1iqRD9EKY?si=Q5gUX-Aq-jEvqCa3",
           duration: "3:50"
         },
         {
-          title: "Flood Safety Tips",
+          title: t("floodSafetyTips"),
           url: "https://youtu.be/cqCMXSOo8qc?si=djeRXyfCFzBX_yuP",
           duration: "4:15"
         }
       ],
       guidelines: [
-        "Move to higher ground immediately",
-        "Avoid walking or driving through flood waters",
-        "Stay away from electrical equipment",
-        "Follow evacuation orders without delay",
-        "Do not attempt to swim through flood waters"
+        t("moveToHigherGroundImmediately"),
+        t("avoidWalkingOrDrivingThroughFlood"),
+        t("stayAwayFromElectricialEquipment"),
+        t("withoutEvacuationOrdersWithoutDelay"),
+        t("doNotSwimThroughFloodWater")
       ]
     },
     {
       id: 4,
-      title: "Home Protection",
+      title: t("homeProtection"),
       icon: "home",
       color: "bg-green-500",
       videos: [
         {
-          title: "How to Flood-Proof Your Home",
+          title: t("howToFloodProofYourHome"),
           url: "https://youtube.com/shorts/Xq8ZHcI49es?si=miD2etNlHizqEGUC",
           duration: "8:30"
         },
         {
-          title: "Sandbagging for Flood Protection",
+          title: t("sandBaggingForFloodProtection"),
           url: "https://youtu.be/7b0p5ZzN524?si=aFyoyEOX_kM_y_uK",
           duration: "6:45"
         }
       ],
       guidelines: [
-        "Install check valves in plumbing",
-        "Waterproof basement walls",
-        "Elevate electrical systems",
-        "Anchor fuel tanks",
-        "Clear gutters and drains regularly"
+        t("installCheckValuesInPlumbing"),
+        t("waterproofBasementWalls"),
+        t("elevateElectricalSystem"),
+        t("anchorFuelTanks"),
+        t("clearGuttersAndDrainsRegularly")
       ]
     },
     {
       id: 5,
-      title: "After Flood Safety",
+      title: t("afterFloodSafety"),
       icon: "medical",
       color: "bg-purple-500",
       videos: [
         {
-          title: "Post-Flood Recovery Guide",
+          title: t("postFloodRecoveryGuide"),
           url: "https://youtu.be/Qdtii023TdA?si=gg7Rnce2HqiOAp4J",
           duration: "9:15"
         },
         {
-          title: "Flood Cleanup and Safety",
+          title: t("floodCleanupandSafety"),
           url: "https://youtu.be/vnzlQ3l05Xs?si=hjNhGgSuXLujgE5B",
           duration: "7:30"
         }
       ],
       guidelines: [
-        "Wait for official clearance to return",
-        "Check for structural damage",
-        "Document damage for insurance",
-        "Disinfect contaminated items",
-        "Watch for mold growth",
-        "Test drinking water safety"
+        t("waitForOfficialClearanceToReturn"),
+        t("checkForStructuralDamage"),
+        t("documentDamageForInsurance"),
+        t("disinfectContaminatedItems"),
+        t("watchForMoldGrowth"),
+        t("testDrinkingWaterSafety")
       ]
     },
     {
       id: 6,
-      title: "First Aid & Health",
+      title: t("firstAidAndHealth"),
       icon: "medkit",
       color: "bg-pink-500",
       videos: [
         {
-          title: "First Aid for Flood-Related Injuries",
+          title: t("firstAidForFloodRelatedInjuries"),
           url: "https://youtu.be/W6E_ePBCzOA?si=Vn_gHYykmvUyMfMT",
           duration: "5:20"
         },
         {
-          title: "Waterborne Diseases After Flooding",
+          title: t("waterBorneDiseaseAfterFlooding"),
           url: "https://youtu.be/26n4DWNPzvM?si=P0mXAUteaine9C_C",
           duration: "6:40"
         }
       ],
       guidelines: [
-        "Treat wounds immediately to prevent infection",
-        "Watch for signs of waterborne diseases",
-        "Maintain personal hygiene",
-        "Use protective gear during cleanup",
-        "Seek medical attention for any symptoms"
+        t("treatWondsImmediatelyToPreventInfection"),
+        t("watchForSignsOfWaterBorneDisease"),
+        t("maintainPersonalHygiene"),
+        t("useProtectiveGearDuringCleanup"),
+        t("seekMedicalAttentionForAnySyn")
       ]
     }
   ];
 
   const emergencyContacts = [
-    { name: "Emergency Services", number: "911", icon: "alert-circle" },
-    { name: "Flood Helpline", number: "09 450 065 964", icon: "call" },
-    { name: "Local Emergency", number: "+95 9 431 59737", icon: "business" },
-    { name: "Power Outage", number: "1-800-POWERON", icon: "flash" }
+    { name: t("emergencyServices"), number: t("nineOneOne"), icon: "alert-circle" },
+    { name: t("floodHelpline"), number: t("floodCall"), icon: "call" },
+    { name: t("localEmergency"), number: t("localCall"), icon: "business" },
+    { name: t("powerOutage"), number: t("powerRon"), icon: "flash" }
   ];
 
   const toggleSection = useCallback((sectionId: number) => {
@@ -219,20 +242,114 @@ const getYouTubeVideoId = (url: string) => {
     Linking.openURL(`tel:${number}`);
   }, []);
 
+  const userLocation = useMemo(() => {
+      // Use demo location if demo mode is enabled
+      if (isDemoMode()) {
+        return APP_CONFIG.DEMO_DATA.location;
+      }
+  
+      // Use real location data
+      if (isAuthenticated && user) {
+        return `${user.city}, ${user.township}`;
+      }
+      if (coordinates?.city) {
+        // Show city, township if available, otherwise just city
+        if (coordinates.township) {
+          return `${coordinates.city}, ${coordinates.township}`;
+        }
+        return coordinates.city;
+      }
+      if (coordinates) {
+        // Fallback to coordinates if reverse geocoding failed
+        return `${coordinates.latitude.toFixed(
+          2
+        )}, ${coordinates.longitude.toFixed(2)}`;
+      }
+      return "Getting location...";
+    }, [isAuthenticated, user, coordinates]);
+
+     const handleProfilePress = useCallback(() => {
+        logoutMutation.mutate();
+      }, [logoutMutation]);
+
+      const handleLoginPress = useCallback(() => {
+          // Handle login navigation - will be implemented later
+          console.log("Login pressed");
+          router.push("/(auth)/login");
+        }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Heading className="text-blue-700 text-3xl font-bold mb-2 text-left">
-          Flood Safety Education
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+        {/* Fixed Header - user's location, localization and profile icon */}
+        <Box className="bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm mb-6 mx-[-20px] ml-[-20px] mr-[-20px]">
+          <HStack className="items-center justify-between w-full">
+            <HStack className="flex-1 items-center" space="sm">
+              <MapPin size={18} color="#3B82F6" />
+              <Text
+                className="text-gray-800 text-sm font-medium flex-1"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+                numberOfLines={1}
+              >
+                {userLocation}
+              </Text>
+            </HStack>
+            
+            <HStack space="sm" className="items-center flex-shrink-0">
+              <LanguageSwitcher />
+              {isAuthenticated ? (
+                <Pressable
+                  onPress={handleProfilePress}
+                  disabled={logoutMutation.isPending}
+                >
+                  <View className="bg-blue-100 rounded-full p-2">
+                    <User size={18} color="#3B82F6" />
+                  </View>
+                </Pressable>
+              ) : (
+                <Pressable onPress={handleLoginPress}>
+                  <View className="bg-blue-500 px-3 py-1.5 rounded-full">
+                    <Text
+                      className="text-white text-xs font-semibold"
+                      style={{ fontFamily: "Z06-Walone-Bold" }}
+                    >
+                      {t("login")}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            </HStack>
+          </HStack>
+          
+          {isAuthenticated && user && (
+            <HStack space="xs" className="items-center mt-2">
+              <User size={12} color="#10B981" />
+              <Text
+                className="text-green-600 text-xs font-medium"
+                style={{ fontFamily: "Z06-Walone-Regular" }}
+                numberOfLines={1}
+              >
+                {user.name} • {user.email}
+              </Text>
+            </HStack>
+          )}
+        </Box>
+
+        <Heading className="text-blue-700 text-2xl font-medium mb-2 text-left"
+        style={{ fontFamily: "Z06-Walone-Bold" }}
+        >
+          {t("floodSafetyEducation")}
         </Heading>
-        <Text className="text-gray-600 text-left mb-6">
-          Complete Guide for Preparedness and Response
+        <Text className="text-gray-600 text-left mb-6"
+        style={{ fontFamily: "Z06-Walone-Bold" }}
+        >
+          {t("completeGuideForPreparednessAndResponse")}
         </Text>
 
         {/* Emergency Contacts */}
         <Box className="mb-6">
-          <Heading className="text-xl font-bold text-gray-800 mb-4">
-            Emergency Contacts
+          <Heading className="text-xl font-medium text-gray-800 mb-4" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            {t("emergencyContacts")}
           </Heading>
           <Box className="flex-row flex-wrap justify-between">
             {emergencyContacts.map((contact, index) => (
@@ -243,10 +360,10 @@ const getYouTubeVideoId = (url: string) => {
               >
                 <Box className="items-center">
                   <Ionicons name={contact.icon} size={24} color="#ef4444" />
-                  <Text className="text-gray-800 font-semibold mt-2 text-center">
+                  <Text className="text-gray-800 font-semibold mt-2 text-center" style={{ fontFamily: "Z06-Walone-Bold" }}>
                     {contact.name}
                   </Text>
-                  <Text className="text-red-500 font-bold text-sm mt-1">
+                  <Text className="text-red-500 font-bold text-sm mt-1" style={{ fontFamily: "Z06-Walone-Bold" }}>
                     {contact.number}
                   </Text>
                 </Box>
@@ -266,7 +383,7 @@ const getYouTubeVideoId = (url: string) => {
                 <Box className={`w-10 h-10 rounded-full ${section.color} items-center justify-center mr-3`}>
                   <Ionicons name={section.icon} size={20} color="white" />
                 </Box>
-                <Heading className="text-lg font-bold text-gray-800">
+                <Heading className="text-lg font-bold text-gray-800" style={{ fontFamily: "Z06-Walone-Bold" }}>
                   {section.title}
                 </Heading>
               </Box>
@@ -280,7 +397,6 @@ const getYouTubeVideoId = (url: string) => {
             {expandedSection === section.id && (
               <Box className="mt-4">
                {/* Video Lectures */}
-<Text className="text-gray-700 font-semibold mb-3">Video Lectures</Text>
 <Box className="mb-4">
   {section.videos.map((video, index) => {
     const thumbnailSource = videoThumbnails[video.url];
@@ -328,7 +444,7 @@ const getYouTubeVideoId = (url: string) => {
         
         {/* Video Info */}
         <Box className="p-4">
-          <Text className="text-gray-800 font-bold text-base mb-2">
+          <Text className="text-gray-800 font-bold text-base mb-2" style={{ fontFamily: "Z06-Walone-Bold" }}>
             {video.title}
           </Text>
           
@@ -336,11 +452,11 @@ const getYouTubeVideoId = (url: string) => {
             <Box className="w-6 h-6 bg-red-500 rounded-full items-center justify-center mr-2">
               <Ionicons name="play-circle" size={12} color="white" />
             </Box>
-            <Text className="text-gray-600 text-sm">
-              Flood Safety Education
+            <Text className="text-gray-600 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+              {t("floodSafetyEducation")}
             </Text>
             <Text className="text-gray-400 text-sm mx-2">•</Text>
-            <Text className="text-gray-500 text-sm">Tap to watch</Text>
+            <Text className="text-gray-500 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>{t("tapToWatch")}</Text>
           </Box>
         </Box>
       </TouchableOpacity>
@@ -349,12 +465,15 @@ const getYouTubeVideoId = (url: string) => {
 </Box>
 
                 {/* Guidelines */}
-                <Text className="text-gray-700 font-semibold mb-3">Safety Guidelines</Text>
+                <Text className="text-gray-700 font-semibold mb-3" style={{ fontFamily: "Z06-Walone-Bold" }}
+                >
+                  {t("safetyGuidelines")}
+                </Text>
                 <Box className="bg-green-50 p-3 rounded-xl">
                   {section.guidelines.map((guideline, index) => (
                     <Box key={index} className="flex-row items-start mb-2">
                       <Ionicons name="checkmark-circle" size={16} color="#10b981" className="mt-1" />
-                      <Text className="text-gray-700 ml-2 flex-1">
+                      <Text className="text-gray-700 ml-2 flex-1" style={{ fontFamily: "Z06-Walone-Bold" }}>
                         {guideline}
                       </Text>
                     </Box>
@@ -367,32 +486,32 @@ const getYouTubeVideoId = (url: string) => {
 
         {/* Quick Action Tips */}
         <Box className="bg-white rounded-2xl p-4 mb-4 border border-gray-200 shadow-sm">
-          <Heading className="text-xl font-bold text-gray-800 mb-4">
-            Quick Action Tips
+          <Heading className="text-xl font-bold text-gray-800 mb-4" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            {t("quickActionTips")}
           </Heading>
           <Box className="flex-row flex-wrap justify-between">
             <Box className="w-[48%] bg-orange-50 p-4 rounded-xl items-center mb-3">
               <Ionicons name="volume-high" size={24} color="#f59e0b" />
-              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
-                Stay Informed
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+                {t("stayInformed")}
               </Text>
             </Box>
             <Box className="w-[48%] bg-red-50 p-4 rounded-xl items-center mb-3">
               <Ionicons name="walk" size={24} color="#ef4444" />
-              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
-                Evacuate Early
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+                {t("evacuateEarly")}
               </Text>
             </Box>
             <Box className="w-[48%] bg-green-50 p-4 rounded-xl items-center">
               <Ionicons name="battery-charging" size={24} color="#10b981" />
-              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
-                Charge Devices
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+                {t("chargeDevices")}
               </Text>
             </Box>
             <Box className="w-[48%] bg-blue-50 p-4 rounded-xl items-center">
               <Ionicons name="document-text" size={24} color="#3b82f6" />
-              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm">
-                Keep Documents Safe
+              <Text className="text-gray-800 font-semibold mt-2 text-center text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+                {t("keepDocumentsSafe")}
               </Text>
             </Box>
           </Box>
@@ -400,27 +519,27 @@ const getYouTubeVideoId = (url: string) => {
 
         {/* Emergency Kit Checklist */}
         <Box className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-          <Heading className="text-xl font-bold text-gray-800 mb-4">
-            Emergency Kit Checklist
+          <Heading className="text-xl font-bold text-gray-800 mb-4" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            {t("emergencyKitChecklist")}
           </Heading>
           <Box className="bg-gray-50 p-4 rounded-xl">
             {[
-              "Water (1 gallon per person per day)",
-              "Non-perishable food (3-day supply)",
-              "First aid kit",
-              "Flashlight with extra batteries",
-              "Portable radio",
-              "Medications (7-day supply)",
-              "Personal hygiene items",
-              "Multi-tool",
-              "Emergency blankets",
-              "Important documents copies",
-              "Cash",
-              "Phone charger & power bank"
+              t("waterOneGallonPersonPerDay"),
+              t("nonPerishableFood"),
+              t("firstAidKit"),
+              t("flashlighWithExtraBatteries"),
+              t("portableRadio"),
+              t("medicationsSupply"),
+              t("personalHygieneItems"),
+              t("multiTool"),
+              t("emergencyBlankets"),
+              t("importantDocumentsCopies"),
+              t("cash"),
+              t("phoneChargerAndPowerBank")
             ].map((item, index) => (
               <Box key={index} className="flex-row items-center mb-2">
                 <Ionicons name="square-outline" size={20} color="#6b7280" />
-                <Text className="text-gray-700 ml-3 flex-1">
+                <Text className="text-gray-700 ml-3 flex-1" style={{ fontFamily: "Z06-Walone-Bold" }}>
                   {item}
                 </Text>
               </Box>

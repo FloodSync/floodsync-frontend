@@ -245,8 +245,8 @@ export default function HomeScreen() {
   }, []);
 
   const handleProfilePress = useCallback(() => {
-    logoutMutation.mutate();
-  }, [logoutMutation]);
+    router.push("/(auth)/profile");
+  }, []);
 
   const handleSafetyResponse = useCallback((isSafe: boolean) => {
     console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
@@ -337,6 +337,7 @@ export default function HomeScreen() {
             </HStack>
           </HStack>
         </Box>
+
         {/* Flood Risk Indicator */}
         <Box className="bg-white mb-4 mt-2 px-4 py-4 border-b border-gray-200">
           <HStack className="items-center justify-between mb-2">
