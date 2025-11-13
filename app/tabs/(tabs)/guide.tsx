@@ -25,6 +25,8 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLogout } from "@/hooks/use-auth";
 import { router } from "expo-router";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Video } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 
 const videoThumbnails = {
   "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP": require("@/assets/images/flood-101-thumbnail.webp"),
@@ -41,6 +43,21 @@ const videoThumbnails = {
   "https://youtu.be/26n4DWNPzvM?si=P0mXAUteaine9C_C": require("@/assets/images/waterborne-diseases-thumbnail.jpg"),
 };
 
+const offlineVideos = {
+  "https://youtu.be/ivUKLr8q4sE?si=Ihoy9W5J-6pJKKtP": require("@/assets/videos/flood-101.mp4"),
+  "https://youtu.be/cCZWkMXJwQE?si=QXsb-H7q5T1YvbM_": require("@/assets/videos/risk-assessment.mp4"),
+  "https://youtu.be/43M5mZuzHF8?si=bjAf3CwBrjvSiiX5": require("@/assets/videos/emergency-preparedness.mp4"),
+  "https://youtu.be/pi_nUPcQz_A?si=nTaK05UGqVwQQYcI": require("@/assets/videos/prepare-flood.mp4"),
+  "https://youtu.be/rV1iqRD9EKY?si=Q5gUX-Aq-jEvqCa3": require("@/assets/videos/during-flood.mp4"),
+  "https://youtu.be/cqCMXSOo8qc?si=djeRXyfCFzBX_yuP": require("@/assets/videos/flood-safety.mp4"),
+  "https://youtube.com/shorts/Xq8ZHcI49es?si=miD2etNlHizqEGUC": require("@/assets/videos/flood-proof-home.mp4"),
+  "https://youtu.be/7b0p5ZzN524?si=aFyoyEOX_kM_y_uK": require("@/assets/videos/sandbagging.mp4"),
+  "https://youtu.be/Qdtii023TdA?si=gg7Rnce2HqiOAp4J": require("@/assets/videos/post-flood.mp4"),
+  "https://youtu.be/vnzlQ3l05Xs?si=hjNhGgSuXLujgE5B": require("@/assets/videos/flood-cleanup.mp4"),
+  "https://youtu.be/W6E_ePBCzOA?si=Vn_gHYykmvUyMfMT": require("@/assets/videos/first-aid.mp4"),
+  "https://youtu.be/26n4DWNPzvM?si=P0mXAUteaine9C_C": require("@/assets/videos/waterborne-diseases.mp4"),
+};
+
 // Fallback gradient colors for each section
 const sectionColors = {
   1: ["from-red-500", "to-red-700"],
@@ -50,6 +67,175 @@ const sectionColors = {
   5: ["from-purple-500", "to-purple-700"],
   6: ["from-pink-500", "to-pink-700"],
 };
+
+// Video Player Component
+const VideoPlayerComponent = React.memo(({ 
+  video, 
+  sectionId,
+  videoStates,
+  currentPlayingVideo,
+  onTogglePlayback,
+  onStopVideo 
+}: { 
+  video: any;
+  sectionId: number;
+  videoStates: any;
+  currentPlayingVideo: string | null;
+  onTogglePlayback: (videoUrl: string) => void;
+  onStopVideo: (videoUrl: string) => void;
+}) => {
+  const videoRef = React.useRef<Video>(null);
+  const videoUrl = video.url;
+  const videoState = videoStates[videoUrl] || { isPlaying: false, showControls: false };
+  const offlineVideoSource = offlineVideos[videoUrl];
+  const thumbnailSource = videoThumbnails[videoUrl];
+  const [fromColor, toColor] = sectionColors[sectionId] || ["from-blue-500", "to-purple-600"];
+
+  React.useEffect(() => {
+    if (currentPlayingVideo && currentPlayingVideo !== videoUrl && videoState.isPlaying) {
+      onTogglePlayback(videoUrl);
+    }
+  }, [currentPlayingVideo, videoUrl, videoState.isPlaying]);
+
+  const handleVideoPress = () => {
+    if (offlineVideoSource) {
+      onTogglePlayback(videoUrl);
+    } else {
+      Linking.openURL(videoUrl).catch(err => console.error('Failed to open URL:', err));
+    }
+  };
+
+  if (!offlineVideoSource) {
+    return (
+      <TouchableOpacity 
+        className="mb-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+        onPress={handleVideoPress}
+        activeOpacity={0.7}
+      >
+        <Box className="relative">
+          {thumbnailSource ? (
+            <Image 
+              source={thumbnailSource}
+              className="w-full h-48"
+              resizeMode="cover"
+            />
+          ) : (
+            <Box className={`w-full h-48 bg-gradient-to-br ${fromColor} ${toColor} items-center justify-center`}>
+              <Box className="bg-black bg-opacity-30 rounded-full p-4">
+                <Ionicons name="play" size={32} color="white" />
+              </Box>
+            </Box>
+          )}
+          
+          <Box className="absolute inset-0 items-center justify-center">
+            <Box className="bg-black bg-opacity-40 rounded-full p-3">
+              <Ionicons name="play" size={24} color="white" />
+            </Box>
+          </Box>
+          
+          <Box className="absolute top-3 right-3 bg-black bg-opacity-80 px-2 py-1 rounded">
+            <Text className="text-white text-xs font-medium">
+              {video.duration}
+            </Text>
+          </Box>
+        </Box>
+        
+        <Box className="p-4">
+          <Text className="text-gray-800 font-bold text-base mb-2" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            {video.title}
+          </Text>
+          
+          <Box className="flex-row items-center">
+            <Box className="w-6 h-6 bg-red-500 rounded-full items-center justify-center mr-2">
+              <Ionicons name="play-circle" size={12} color="white" />
+            </Box>
+            <Text className="text-gray-600 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+              Flood Safety Education
+            </Text>
+            <Text className="text-gray-400 text-sm mx-2">•</Text>
+            <Text className="text-gray-500 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>Tap to Watch Online</Text>
+          </Box>
+        </Box>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <Box className="mb-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <Box className="relative">
+        <Video
+          ref={videoRef}
+          source={offlineVideoSource}
+          style={{ width: '100%', height: 200 }}
+          resizeMode="cover"
+          shouldPlay={videoState.isPlaying}
+          isLooping={false}
+          useNativeControls={videoState.showControls}
+          onPlaybackStatusUpdate={(status: any) => {
+            if (status.didJustFinish) {
+              onStopVideo(videoUrl);
+            }
+          }}
+        />
+        
+        {!videoState.showControls && (
+          <Pressable 
+            className="absolute inset-0 items-center justify-center"
+            onPress={() => onTogglePlayback(videoUrl)}
+          >
+            <Box className="bg-black bg-opacity-40 rounded-full p-4">
+              <Ionicons 
+                name={videoState.isPlaying ? "pause" : "play"} 
+                size={32} 
+                color="white" 
+              />
+            </Box>
+          </Pressable>
+        )}
+        
+        <Box className="absolute top-3 right-3 bg-black bg-opacity-80 px-2 py-1 rounded">
+          <Text className="text-white text-xs font-medium">
+            {video.duration}
+          </Text>
+        </Box>
+      </Box>
+      
+      <Box className="p-4">
+        <Text className="text-gray-800 font-bold text-base mb-2" style={{ fontFamily: "Z06-Walone-Bold" }}>
+          {video.title}
+        </Text>
+        
+        <Box className="flex-row items-center">
+          <Box className="w-6 h-6 bg-green-500 rounded-full items-center justify-center mr-2">
+            <Ionicons name="play-circle" size={12} color="white" />
+          </Box>
+          <Text className="text-gray-600 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            Flood Safety Education
+          </Text>
+          <Text className="text-gray-400 text-sm mx-2">•</Text>
+          <Text className="text-green-600 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
+            Offline Available
+          </Text>
+        </Box>
+        
+        {videoState.showControls && (
+          <Box className="flex-row justify-center mt-3 space-x-4">
+            <Pressable onPress={() => onTogglePlayback(videoUrl)}>
+              <Ionicons 
+                name={videoState.isPlaying ? "pause-circle" : "play-circle"} 
+                size={32} 
+                color="#3b82f6" 
+              />
+            </Pressable>
+            <Pressable onPress={() => onStopVideo(videoUrl)}>
+              <Ionicons name="stop-circle" size={32} color="#ef4444" />
+            </Pressable>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+});
 
 const Guide = () => {
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
@@ -62,11 +248,8 @@ const Guide = () => {
     } = useLocation();
   const { t } = useLanguage();
 
-  // Function to extract YouTube video ID from URL
-const getYouTubeVideoId = (url: string) => {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-  return match ? match[1] : null;
-};
+  const [videoStates, setVideoStates] = useState<{[key: string]: {isPlaying: boolean; showControls: boolean}}>({});
+  const [currentPlayingVideo, setCurrentPlayingVideo] = useState<string | null>(null);
 
   const educationalContent = [
     {
@@ -232,49 +415,71 @@ const getYouTubeVideoId = (url: string) => {
     setExpandedSection(expandedSection === sectionId ? null : sectionId);
   }, [expandedSection]);
 
-  const openVideo = useCallback((url: string) => {
-    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
-  }, []);
-
   const callEmergency = useCallback((number: string) => {
     Linking.openURL(`tel:${number}`);
   }, []);
 
   const userLocation = useMemo(() => {
-      // Use demo location if demo mode is enabled
       if (isDemoMode()) {
         return APP_CONFIG.DEMO_DATA.location;
       }
   
-      // Use real location data
       if (isAuthenticated && user) {
         return `${user.city}, ${user.township}`;
       }
       if (coordinates?.city) {
-        // Show city, township if available, otherwise just city
         if (coordinates.township) {
           return `${coordinates.city}, ${coordinates.township}`;
         }
         return coordinates.city;
       }
       if (coordinates) {
-        // Fallback to coordinates if reverse geocoding failed
-        return `${coordinates.latitude.toFixed(
-          2
-        )}, ${coordinates.longitude.toFixed(2)}`;
+        return `${coordinates.latitude.toFixed(2)}, ${coordinates.longitude.toFixed(2)}`;
       }
       return "Getting location...";
     }, [isAuthenticated, user, coordinates]);
 
-     const handleProfilePress = useCallback(() => {
-        logoutMutation.mutate();
-      }, [logoutMutation]);
+  const handleProfilePress = useCallback(() => {
+    logoutMutation.mutate();
+  }, [logoutMutation]);
 
-      const handleLoginPress = useCallback(() => {
-          // Handle login navigation - will be implemented later
-          console.log("Login pressed");
-          router.push("/(auth)/login");
-        }, []);
+  const handleLoginPress = useCallback(() => {
+    router.push("/(auth)/login");
+  }, []);
+
+  const toggleVideoPlayback = useCallback((videoUrl: string) => {
+    setVideoStates(prev => {
+      const currentState = prev[videoUrl];
+      const newIsPlaying = !currentState?.isPlaying;
+      
+      if (newIsPlaying) {
+        setCurrentPlayingVideo(videoUrl);
+      } else if (currentPlayingVideo === videoUrl) {
+        setCurrentPlayingVideo(null);
+      }
+      
+      return {
+        ...prev,
+        [videoUrl]: {
+          isPlaying: newIsPlaying,
+          showControls: true
+        }
+      };
+    });
+  }, [currentPlayingVideo]);
+
+  const stopVideo = useCallback((videoUrl: string) => {
+    setVideoStates(prev => ({
+      ...prev,
+      [videoUrl]: {
+        isPlaying: false,
+        showControls: false
+      }
+    }));
+    if (currentPlayingVideo === videoUrl) {
+      setCurrentPlayingVideo(null);
+    }
+  }, [currentPlayingVideo]);
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
@@ -394,73 +599,20 @@ const getYouTubeVideoId = (url: string) => {
 
             {expandedSection === section.id && (
               <Box className="mt-4">
-               {/* Video Lectures */}
-<Box className="mb-4">
-  {section.videos.map((video, index) => {
-    const thumbnailSource = videoThumbnails[video.url];
-    const [fromColor, toColor] = sectionColors[section.id] || ["from-blue-500", "to-purple-600"];
-
-    return (
-      <TouchableOpacity 
-        key={index}
-        className="mb-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
-        onPress={() => openVideo(video.url)}
-        activeOpacity={0.7}
-      >
-        {/* Thumbnail Container */}
-        <Box className="relative">
-          {thumbnailSource ? (
-            // Local Image Thumbnail
-            <Image 
-              source={thumbnailSource}
-              className="w-full h-48"
-              resizeMode="cover"
-            />
-          ) : (
-            // Fallback Gradient
-            <Box className={`w-full h-48 bg-gradient-to-br ${fromColor} ${toColor} items-center justify-center`}>
-              <Box className="bg-black bg-opacity-30 rounded-full p-4">
-                <Ionicons name="play" size={32} color="white" />
-              </Box>
-            </Box>
-          )}
-          
-          {/* Play Button Overlay */}
-          <Box className="absolute inset-0 items-center justify-center">
-            <Box className="bg-black bg-opacity-40 rounded-full p-3">
-              <Ionicons name="play" size={24} color="white" />
-            </Box>
-          </Box>
-          
-          {/* Duration Badge */}
-          <Box className="absolute top-3 right-3 bg-black bg-opacity-80 px-2 py-1 rounded">
-            <Text className="text-white text-xs font-medium">
-              {video.duration}
-            </Text>
-          </Box>
-        </Box>
-        
-        {/* Video Info */}
-        <Box className="p-4">
-          <Text className="text-gray-800 font-bold text-base mb-2" style={{ fontFamily: "Z06-Walone-Bold" }}>
-            {video.title}
-          </Text>
-          
-          <Box className="flex-row items-center">
-            <Box className="w-6 h-6 bg-red-500 rounded-full items-center justify-center mr-2">
-              <Ionicons name="play-circle" size={12} color="white" />
-            </Box>
-            <Text className="text-gray-600 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>
-              {t("floodSafetyEducation")}
-            </Text>
-            <Text className="text-gray-400 text-sm mx-2">•</Text>
-            <Text className="text-gray-500 text-sm" style={{ fontFamily: "Z06-Walone-Bold" }}>{t("tapToWatch")}</Text>
-          </Box>
-        </Box>
-      </TouchableOpacity>
-    );
-  })}
-</Box>
+                {/* Video Lectures */}
+                <Box className="mb-4">
+                  {section.videos.map((video, index) => (
+                    <VideoPlayerComponent
+                      key={index}
+                      video={video}
+                      sectionId={section.id}
+                      videoStates={videoStates}
+                      currentPlayingVideo={currentPlayingVideo}
+                      onTogglePlayback={toggleVideoPlayback}
+                      onStopVideo={stopVideo}
+                    />
+                  ))}
+                </Box>
 
                 {/* Guidelines */}
                 <Text className="text-gray-700 font-semibold mb-3" style={{ fontFamily: "Z06-Walone-Bold" }}
