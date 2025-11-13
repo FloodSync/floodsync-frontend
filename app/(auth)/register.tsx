@@ -18,6 +18,47 @@ import { useRegister } from "@/hooks/use-auth";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 
+const validateName = (name: string) => {
+  if (!name.trim()) return "Name is required";
+  if (name.trim().length < 2) return "Name must be at least 2 characters";
+  if (!/^[a-zA-Z\s]+$/.test(name.trim())) return "Name can only contain letters and spaces";
+  return null;
+};
+
+const validateEmail = (email: string) => {
+  if (!email.trim()) return "Email is required";
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) return "Please enter a valid email address";
+  return null;
+};
+
+const validatePassword = (password: string) => {
+  if (!password) return "Password is required";
+  if (password.length < 6) return "Password must be at least 6 characters";
+  if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return "Password must contain both uppercase and lowercase letters";
+  if (!/(?=.*\d)/.test(password)) return "Password must contain at least one number";
+  return null;
+};
+
+const validatePhone = (phone: string) => {
+  if (!phone.trim()) return "Phone number is required";
+  const phoneRegex = /^[0-9+\-\s()]{10,}$/;
+  if (!phoneRegex.test(phone.trim())) return "Please enter a valid phone number";
+  if (phone.replace(/\D/g, '').length < 10) return "Phone number must be at least 10 digits";
+  return null;
+};
+
+const validateCity = (city: string) => {
+  if (!city) return "City selection is required";
+  return null;
+};
+
+const validateTownship = (township: string, city: string) => {
+  if (!township) return "Township selection is required";
+  if (city && !township) return "Please select a township for the chosen city";
+  return null;
+};
+
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,7 +68,71 @@ const Register = () => {
   const [township, setTownship] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Name/Email, 2: Password/Phone, 3: City/Township
-  
+  const [validationErrors, setValidationErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    city: "",
+    township: ""
+  });
+
+  // Add validation function for each step
+  const validateStep = (step: number) => {
+    const errors = {
+      name: "",
+      email: "",
+      password: "",
+      phone: "",
+      city: "",
+      township: ""
+    };
+
+    let isValid = true;
+
+    if (step === 1) {
+      const nameError = validateName(name);
+      const emailError = validateEmail(email);
+
+      if (nameError) {
+        errors.name = nameError;
+        isValid = false;
+      }
+      if (emailError) {
+        errors.email = emailError;
+        isValid = false;
+      }
+    } else if (step === 2) {
+      const passwordError = validatePassword(password);
+      const phoneError = validatePhone(phone);
+
+      if (passwordError) {
+        errors.password = passwordError;
+        isValid = false;
+      }
+      if (phoneError) {
+        errors.phone = phoneError;
+        isValid = false;
+      }
+    } else if (step === 3) {
+      const cityError = validateCity(city);
+      const townshipError = validateTownship(township, city);
+
+      if (cityError) {
+        errors.city = cityError;
+        isValid = false;
+      }
+      if (townshipError) {
+        errors.township = townshipError;
+        isValid = false;
+      }
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+
   const registerMutation = useRegister();
 
   const handleLoginPress = useCallback(() => {
@@ -56,14 +161,17 @@ const Register = () => {
   }, [city]);
 
   const handleRegister = () => {
-    if (
-      !name.trim() ||
-      !email.trim() ||
-      !password.trim() ||
-      !phone.trim() ||
-      !city ||
-      !township
-    ) {
+    // Validate all steps before submitting
+    const step1Valid = validateStep(1);
+    const step2Valid = validateStep(2);
+    const step3Valid = validateStep(3);
+
+    if (!step1Valid || !step2Valid || !step3Valid) {
+      Alert.alert("Validation Error", "Please fix all validation errors before submitting");
+      return;
+    }
+
+    if (!name.trim() || !email.trim() || !password.trim() || !phone.trim() || !city || !township) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -90,6 +198,13 @@ const Register = () => {
     });
   };
 
+  const clearError = (field: string) => {
+    setValidationErrors(prev => ({
+      ...prev,
+      [field]: ""
+    }));
+  };
+
   React.useEffect(() => {
     if (registerMutation.isError) {
       Alert.alert(
@@ -99,13 +214,14 @@ const Register = () => {
     }
   }, [registerMutation.isError, registerMutation.error]);
 
+  // nextStep function (include validation)
   const nextStep = () => {
-    if (currentStep === 1 && name.trim() && email.trim()) {
-      setCurrentStep(2);
-    } else if (currentStep === 2 && password.trim() && phone.trim()) {
-      setCurrentStep(3);
-    } else {
-      Alert.alert("Error", "Please fill in all fields before continuing");
+    if (validateStep(currentStep)) {
+      if (currentStep === 1 && name.trim() && email.trim()) {
+        setCurrentStep(2);
+      } else if (currentStep === 2 && password.trim() && phone.trim()) {
+        setCurrentStep(3);
+      }
     }
   };
 
@@ -121,22 +237,36 @@ const Register = () => {
       <Box className="mb-4">
         <Text className="text-gray-700 mb-1">Full Name</Text>
         <TextInput
-          className="bg-white p-3 rounded-2xl border border-gray-300"
+          className={`bg-white p-3 rounded-2xl border ${validationErrors.name ? "border-red-500" : "border-gray-300"
+            }`}
           placeholder="Enter your name"
           value={name}
-          onChangeText={setName}
+          onChangeText={(text) => {
+            setName(text);
+            clearError("name");
+          }}
         />
+        {validationErrors.name ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.name}</Text>
+        ) : null}
       </Box>
 
       <Box className="mb-6">
         <Text className="text-gray-700 mb-1">Email</Text>
         <TextInput
-          className="bg-white p-3 rounded-2xl border border-gray-300"
+          className={`bg-white p-3 rounded-2xl border ${validationErrors.email ? "border-red-500" : "border-gray-300"
+            }`}
           placeholder="Enter your email"
           keyboardType="email-address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            clearError("email");
+          }}
         />
+        {validationErrors.email ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.email}</Text>
+        ) : null}
       </Box>
     </>
   );
@@ -147,12 +277,19 @@ const Register = () => {
       <Box className="mb-4 relative">
         <Text className="text-gray-700 mb-1">Password</Text>
         <TextInput
-          className="bg-white p-3 rounded-2xl border border-gray-300"
+          className={`bg-white p-3 rounded-2xl border ${validationErrors.password ? "border-red-500" : "border-gray-300"
+            }`}
           placeholder="Enter your password"
           secureTextEntry={!showPassword}
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            clearError("password");
+          }}
         />
+        {validationErrors.password ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.password}</Text>
+        ) : null}
         <Pressable
           onPress={() => setShowPassword(!showPassword)}
           className="absolute right-4 top-9"
@@ -168,12 +305,19 @@ const Register = () => {
       <Box className="mb-6">
         <Text className="text-gray-700 mb-1">Phone Number</Text>
         <TextInput
-          className="bg-white p-3 rounded-2xl border border-gray-300"
+          className={`bg-white p-3 rounded-2xl border ${validationErrors.phone ? "border-red-500" : "border-gray-300"
+            }`}
           placeholder="Enter your phone number"
           keyboardType="phone-pad"
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(text) => {
+            setPhone(text);
+            clearError("phone");
+          }}
         />
+        {validationErrors.phone ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.phone}</Text>
+        ) : null}
       </Box>
     </>
   );
@@ -184,20 +328,34 @@ const Register = () => {
       <Box className="mb-4">
         <Text className="text-gray-700 mb-1">City</Text>
         <SelectList
-          setSelected={setCity}
+          setSelected={(value: string) => {
+            setCity(value);
+            clearError("city");
+          }}
           data={myanmarCities}
           placeholder="Search or select city..."
           searchPlaceholder="Search city..."
-          boxStyles={{ backgroundColor: "white", borderRadius: 12 }}
+          boxStyles={{
+            backgroundColor: "white",
+            borderRadius: 12,
+            borderColor: validationErrors.city ? "#ef4444" : "#d1d5db",
+            borderWidth: 1
+          }}
           inputStyles={{ color: "#000" }}
           dropdownTextStyles={{ color: "#000" }}
         />
+        {validationErrors.city ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.city}</Text>
+        ) : null}
       </Box>
 
       <Box className="mb-6">
         <Text className="text-gray-700 mb-1">Township</Text>
         <SelectList
-          setSelected={setTownship}
+          setSelected={(value: string) => {
+            setTownship(value);
+            clearError("township");
+          }}
           data={filteredTownships}
           placeholder={
             city
@@ -209,27 +367,32 @@ const Register = () => {
             backgroundColor: city ? "white" : "#f3f4f6",
             borderRadius: 12,
             opacity: city ? 1 : 0.6,
+            borderColor: validationErrors.township ? "#ef4444" : "#d1d5db",
+            borderWidth: 1
           }}
           inputStyles={{ color: "#000" }}
           dropdownTextStyles={{ color: "#000" }}
         />
+        {validationErrors.township ? (
+          <Text className="text-red-500 text-sm mt-1">{validationErrors.township}</Text>
+        ) : null}
       </Box>
     </>
   );
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
-      <ScrollView 
-        contentContainerStyle={{ 
-          padding: 20, 
+      <ScrollView
+        contentContainerStyle={{
+          padding: 20,
           flexGrow: 1,
           justifyContent: 'center' // This centers the content vertically
         }}
       >
         {/* App Logo */}
         <Box className="items-center mb-8">
-          <Image 
-            source={require('@/assets/images/logo.png')} 
+          <Image
+            source={require('@/assets/images/logo.png')}
             className="w-[150px] h-[150px] mb-4"
             resizeMode="contain"
           />
@@ -240,23 +403,20 @@ const Register = () => {
           {[1, 2, 3].map((step) => (
             <Box key={step} className="flex-row items-center">
               <Box
-                className={`w-8 h-8 rounded-full items-center justify-center ${
-                  currentStep >= step ? "bg-blue-600" : "bg-gray-300"
-                }`}
+                className={`w-8 h-8 rounded-full items-center justify-center ${currentStep >= step ? "bg-blue-600" : "bg-gray-300"
+                  }`}
               >
                 <Text
-                  className={`font-semibold ${
-                    currentStep >= step ? "text-white" : "text-gray-600"
-                  }`}
+                  className={`font-semibold ${currentStep >= step ? "text-white" : "text-gray-600"
+                    }`}
                 >
                   {step}
                 </Text>
               </Box>
               {step < 3 && (
                 <Box
-                  className={`w-8 h-1 mx-1 ${
-                    currentStep > step ? "bg-blue-600" : "bg-gray-300"
-                  }`}
+                  className={`w-8 h-1 mx-1 ${currentStep > step ? "bg-blue-600" : "bg-gray-300"
+                    }`}
                 />
               )}
             </Box>
