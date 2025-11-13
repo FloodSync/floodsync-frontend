@@ -915,8 +915,8 @@ const MapScreen = () => {
                   key={`${city.name}-${city.township}-${index}`}
                   className="bg-white rounded-lg p-3 mb-2"
                   style={{
-                    borderLeftWidth: 3,
-                    borderLeftColor: getBorderColor(city.status),
+                    //  borderBottomWidth: 1,
+                     borderBottomColor: getBorderColor(city.status),
                   }}
                   onPress={() => handleCityClick(city)}
                 >

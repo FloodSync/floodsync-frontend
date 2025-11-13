@@ -187,7 +187,7 @@ export const translations = {
 
     // Weather
     currentWeatherConditions: "လက်ရှိရာသီဥတုအခြေအနေ",
-    feelsLike: "ခံစားရသော",
+    feelsLike: "ရာသီဉတုအခြေအနေ",
     humidity: "စိုထိုင်းဆ",
     wind: "လေ",
     visibility: "မြင်ကွင်းပေါ်လွင်မှု",

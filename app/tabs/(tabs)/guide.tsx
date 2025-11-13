@@ -484,61 +484,8 @@ const Guide = () => {
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-        {/* Fixed Header - user's location, localization and profile icon */}
-        <Box className="bg-white px-4 py-3 border border-gray-200 shadow-sm mb-6 mx-[-20px] ml-[-20px] mr-[-20px]">
-          <HStack className="items-center justify-between w-full">
-            <HStack className="flex-1 items-center" space="sm">
-              <MapPin size={18} color="#3B82F6" />
-              <Text
-                className="text-gray-800 text-sm font-medium flex-1"
-                style={{ fontFamily: "Z06-Walone-Regular" }}
-                numberOfLines={1}
-              >
-                {userLocation}
-              </Text>
-            </HStack>
-            
-            <HStack space="sm" className="items-center flex-shrink-0">
-              <LanguageSwitcher />
-              {isAuthenticated ? (
-                <Pressable
-                  onPress={handleProfilePress}
-                  disabled={logoutMutation.isPending}
-                >
-                  <View className="bg-blue-100 rounded-full p-2">
-                    <User size={18} color="#3B82F6" />
-                  </View>
-                </Pressable>
-              ) : (
-                <Pressable onPress={handleLoginPress}>
-                  <View className="bg-blue-500 px-3 py-1.5 rounded-full">
-                    <Text
-                      className="text-white text-xs font-semibold"
-                      style={{ fontFamily: "Z06-Walone-Bold" }}
-                    >
-                      {t("login")}
-                    </Text>
-                  </View>
-                </Pressable>
-              )}
-            </HStack>
-          </HStack>
-          
-          {isAuthenticated && user && (
-            <HStack space="xs" className="items-center mt-2">
-              <User size={12} color="#10B981" />
-              <Text
-                className="text-green-600 text-xs font-medium"
-                style={{ fontFamily: "Z06-Walone-Regular" }}
-                numberOfLines={1}
-              >
-                {user.name} • {user.email}
-              </Text>
-            </HStack>
-          )}
-        </Box>
 
-        <Heading className="text-blue-700 text-2xl font-medium mb-2 text-left"
+        <Heading className="text-blue-700 text-2xl font-medium mb-2 text-left mt-3"
         style={{ fontFamily: "Z06-Walone-Bold" }}
         >
           {t("floodSafetyEducation")}
