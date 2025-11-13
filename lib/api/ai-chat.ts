@@ -1,4 +1,4 @@
-const AI_BACKEND_URL = "https://ai-backend-1-awkq.onrender.com";
+const AI_BACKEND_URL = "https://ai-service-backend-um8v.onrender.com";
 
 export interface TextChatRequest {
   text_input: string;
@@ -52,7 +52,7 @@ export const aiChatApi = {
     imageUrl: string
   ): Promise<AIResponse> => {
     try {
-      const response = await fetch(`${AI_BACKEND_URL}/imagerequest`, {
+      const response = await fetch(`${AI_BACKEND_URL}/imageinput`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,4 +75,3 @@ export const aiChatApi = {
     }
   },
 };
-
