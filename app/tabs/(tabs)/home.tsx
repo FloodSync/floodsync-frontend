@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { Text } from "@/components/ui/text";
 import { ScrollView } from "@/components/ui/scroll-view";
 import { SafeAreaView } from "@/components/ui/safe-area-view";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, RefreshControl } from "react-native";
 import {
   MapPin,
   User,
@@ -253,9 +253,40 @@ export default function HomeScreen() {
     // You can add additional logic here if needed
   }, []);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        weatherQuery.refetch(),
+        floodQuery.refetch(),
+        precipitationQuery.refetch(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [weatherQuery, floodQuery, precipitationQuery]);
+
+  const isRefreshing =
+    refreshing ||
+    weatherQuery.isRefetching ||
+    floodQuery.isRefetching ||
+    precipitationQuery.isRefetching;
+
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
-      <ScrollView className="flex-1">
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor="#3B82F6"
+            colors={["#3B82F6"]}
+          />
+        }
+      >
         <Box className="bg-white px-4 py-4 border-b border-gray-200">
           <HStack className="items-center justify-between">
             <VStack className="flex-1">

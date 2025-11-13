@@ -1,19 +1,119 @@
-import React, { useRef } from 'react';
-import { 
-  Text, 
-  ScrollView, 
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
+import {
+  Text,
+  ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Animated,
   Dimensions,
-  SafeAreaView 
+  View,
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
-import { WebView } from 'react-native-webview';
+import { SafeAreaView } from "@/components/ui/safe-area-view";
+import { WebView } from "react-native-webview";
+import { useQuery } from "@tanstack/react-query";
+import { floodingApi } from "@/lib/api/flooding";
+import { RefreshCw } from "lucide-react-native";
 
-const { height } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const MapScreen = () => {
-  const webViewRef = useRef(null);
+  const webViewRef = useRef<any>(null);
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  const {
+    data: floodingData,
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["flooding-data"],
+    queryFn: () => floodingApi.getChancePercentageByCityTown(),
+  });
+
+  useEffect(() => {
+    if (isRefetching) {
+      Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      rotateAnim.setValue(0);
+      Animated.timing(rotateAnim, {
+        toValue: 0,
+        duration: 0,
+        useNativeDriver: true,
+      }).stop();
+    }
+  }, [isRefetching, rotateAnim]);
+
+  const rotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+
+  const cities = useMemo(() => {
+    if (!floodingData?.data) return [];
+    return floodingData.data.map((item) => ({
+      name: `${item.city} - ${item.township}`,
+      city: item.city,
+      township: item.township,
+      coords: item.coords,
+      status: item.status === "High Risk" ? "High risk" : "Moderate risk",
+      locals: item.locals,
+      chance: item.chance,
+      items: Object.entries(item.items).map(
+        ([key, value]) => `${key}: ${value}`
+      ),
+      safePercentage: item.safePercentage,
+      unsafePercentage: item.unsafePercentage,
+      noresponsePercentage: item.noresponsePercentage,
+    }));
+  }, [floodingData]);
+
+  const injectCitiesData = useCallback(() => {
+    if (cities.length > 0 && webViewRef.current) {
+      const citiesJson = JSON.stringify(cities);
+      const script = `
+        (function() {
+          try {
+            var citiesData = ${citiesJson};
+            if (typeof window.initializeMapWithData === 'function') {
+              window.initializeMapWithData(citiesData);
+            } else if (typeof initializeMapWithData === 'function') {
+              initializeMapWithData(citiesData);
+            } else {
+              setTimeout(function() {
+                if (typeof window.initializeMapWithData === 'function') {
+                  window.initializeMapWithData(citiesData);
+                } else if (typeof initializeMapWithData === 'function') {
+                  initializeMapWithData(citiesData);
+                }
+              }, 1000);
+            }
+          } catch(e) {
+            console.error('Error injecting data:', e);
+          }
+        })();
+        true;
+      `;
+      webViewRef.current.injectJavaScript(script);
+    }
+  }, [cities]);
+
+  useEffect(() => {
+    if (cities.length > 0) {
+      const timer = setTimeout(() => {
+        injectCitiesData();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cities, injectCitiesData]);
 
   const html = `
 <!DOCTYPE html>
@@ -68,21 +168,35 @@ const MapScreen = () => {
       
       .status-tags {
         display: flex;
-        gap: 6px;
-        margin-bottom: 12px;
+        gap: 8px;
+        margin-bottom: 16px;
         flex-wrap: wrap;
       }
       
       .status-tag {
-        padding: 3px 10px;
-        border-radius: 15px;
-        font-size: 9px;
-        text-transform: uppercase;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: opacity 0.3s ease;
       }
       
-      .status-unsafe { background: #e74c3c; color: white; }
-      .status-safe { background: #f39c12; color: white; }
-      .status-noresponse { background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; }
+      .status-safe { 
+        background: #d1fae5; 
+        color: #065f46; 
+        border: 1px solid #10b981;
+      }
+      .status-unsafe { 
+        background: #fee2e2; 
+        color: #991b1b; 
+        border: 1px solid #ef4444;
+      }
+      .status-noresponse { 
+        background: #f3f4f6; 
+        color: #4b5563; 
+        border: 1px solid #d1d5db; 
+      }
       
       .pie-chart-section {
         margin: 12px 0;
@@ -140,15 +254,21 @@ const MapScreen = () => {
       .items-list {
         background: #f8f9fa;
         border-radius: 6px;
-        padding: 10px;
+        padding: 12px;
         border-left: 3px solid #3498db;
         font-size: 13px;
+        list-style: none;
+        margin: 0;
       }
       
       .items-list li {
-        margin-bottom: 4px;
-        padding: 2px 0;
+        margin-bottom: 0;
+        padding: 0;
         color: #34495e;
+      }
+      
+      .items-list li:last-child {
+        border-bottom: none !important;
       }
       
       .close-btn {
@@ -280,9 +400,9 @@ const MapScreen = () => {
       <div class="locals-count" id="enhancedLocals">aprx total Locals: 1000</div>
       
       <div class="status-tags">
-        <span class="status-tag status-unsafe">High risk</span>
-        <span class="status-tag status-safe">Moderate risk</span>
-        <span class="status-tag status-noresponse">no response</span>
+        <span class="status-tag status-safe">Safe</span>
+        <span class="status-tag status-unsafe">Unsafe</span>
+        <span class="status-tag status-noresponse">No Response</span>
       </div>
       
       <div class="pie-chart-section">
@@ -292,12 +412,12 @@ const MapScreen = () => {
         </div>
         <div class="pie-chart-legend">
           <div class="legend-item">
-            <div class="legend-color" style="background: #e74c3c"></div>
-            <span>High risk</span>
+            <div class="legend-color" style="background: #10B981"></div>
+            <span>Safe</span>
           </div>
           <div class="legend-item">
-            <div class="legend-color" style="background: #f39c12"></div>
-            <span>Moderate risk</span>
+            <div class="legend-color" style="background: #e74c3c"></div>
+            <span>Unsafe</span>
           </div>
           <div class="legend-item">
             <div class="legend-color" style="background: #ecf0f1; border: 1px solid #bdc3c7"></div>
@@ -324,21 +444,53 @@ const MapScreen = () => {
     attribution: ''
   }).addTo(map);
 
-  var cities = [
-    { name: 'Yangon', coords: [16.8661, 96.1951], status: 'High risk', locals: 1500, items: ['water', 'rice', 'blankets', 'medical kits'] },
-    { name: 'Mandalay', coords: [21.9587, 96.0891], status: 'High risk', locals: 1200, items: ['food', 'medicine', 'fuel', 'emergency shelters'] },
-    { name: 'Naypyidaw', coords: [19.7633, 96.0785], status: 'Moderate risk', locals: 800, items: ['medical aid', 'tents', 'clean water'] },
-    { name: 'Bago', coords: [17.3349, 96.5063], status: 'Moderate risk', locals: 1000, items: ['clothes', 'water', 'flashlights', 'first aid'] },
-    { name: 'Taunggyi', coords: [20.7899, 97.0332], status: 'Moderate risk', locals: 900, items: ['first aid', 'rice', 'emergency blankets'] }
-  ];
+  var cities = [];
+  var mapInitialized = false;
+  var mapReady = false;
 
-  var animatedCircles = [];
-  var enhancedChart;
+  map.whenReady(function() {
+    mapReady = true;
+    if (cities.length > 0) {
+      renderCities();
+    }
+  });
 
+  window.initializeMapWithData = function(citiesData) {
+    console.log('initializeMapWithData called with', citiesData);
+    cities = citiesData || [];
+    
+    if (mapReady) {
+      if (!mapInitialized) {
+        mapInitialized = true;
+        renderCities();
+      } else {
+        clearMap();
+        renderCities();
+      }
+    } else {
+      map.whenReady(function() {
+        mapReady = true;
+        if (!mapInitialized) {
+          mapInitialized = true;
+        }
+        renderCities();
+      });
+    }
+  };
+
+  function clearMap() {
+    animatedCircles.forEach(circleObj => {
+      map.removeLayer(circleObj.main);
+      circleObj.ripples.forEach(ripple => map.removeLayer(ripple));
+      if (circleObj.marker) map.removeLayer(circleObj.marker);
+    });
+    animatedCircles = [];
+  }
+
+  function renderCities() {
   cities.forEach(city => {
     var color = city.status === 'Moderate risk' ? 'orange' : 'red';
 
-    // Main circle - make sure it's on top and fully clickable
     var circle = L.circle(city.coords, {
       color: color,
       fillColor: color,
@@ -349,7 +501,6 @@ const MapScreen = () => {
       bubblingMouseEvents: true
     }).addTo(map);
 
-    // Create ripple effect circles - make sure they don't block clicks
     var ripple1 = L.circle(city.coords, {
       color: color,
       fillColor: 'transparent',
@@ -372,17 +523,8 @@ const MapScreen = () => {
       bubblingMouseEvents: false
     }).addTo(map);
 
-    // Bring main circle to front to ensure it receives clicks
     circle.bringToFront();
 
-    animatedCircles.push({
-      main: circle,
-      ripples: [ripple1, ripple2],
-      color: color,
-      coords: city.coords
-    });
-
-    // Marker for click area - make it more visible for debugging
     var marker = L.marker(city.coords, { 
       opacity: 0.1,
       interactive: true 
@@ -396,58 +538,132 @@ const MapScreen = () => {
       interactive: true 
     });
 
-    // Add click events with better debugging
     circle.on('click', function(e) {
-      console.log('Circle clicked:', city.name);
       e.originalEvent.stopPropagation();
       showEnhancedInfo(city);
     });
 
     marker.on('click', function(e) {
-      console.log('Marker clicked:', city.name);
       e.originalEvent.stopPropagation();
       showEnhancedInfo(city);
     });
 
-    // Also add click to the tooltip itself
     setTimeout(() => {
       var tooltip = marker.getElement()?.querySelector('.leaflet-tooltip');
       if (tooltip) {
         tooltip.style.pointerEvents = 'auto';
         tooltip.addEventListener('click', function(e) {
-          console.log('Tooltip clicked:', city.name);
           e.stopPropagation();
           showEnhancedInfo(city);
         });
       }
     }, 100);
-  });
+
+      animatedCircles.push({
+        main: circle,
+        ripples: [ripple1, ripple2],
+        marker: marker,
+        color: color,
+        coords: city.coords
+      });
+    });
+  }
+
+  var animatedCircles = [];
+  var enhancedChart;
 
   function showEnhancedInfo(city) {
-    console.log('Showing info for:', city.name);
     var enhancedPanel = document.getElementById('enhancedInfoPanel');
     document.getElementById('enhancedCityName').textContent = city.name;
-    document.getElementById('enhancedLocals').textContent = "Approx total Locals: " + city.locals;
+    document.getElementById('enhancedLocals').textContent = "Approx total Locals: " + city.locals.toLocaleString();
     
     var statusTags = document.querySelectorAll('.status-tag');
+    var safeTag = document.querySelector('.status-safe');
+    var unsafeTag = document.querySelector('.status-unsafe');
+    var noResponseTag = document.querySelector('.status-noresponse');
+    
     statusTags.forEach(tag => {
-      tag.style.opacity = '0.3';
+      tag.style.opacity = '0.4';
+      tag.style.transform = 'scale(0.95)';
     });
     
-    if (city.status === 'High risk') {
-      document.querySelector('.status-unsafe').style.opacity = '1';
-    } else if (city.status === 'Moderate risk') {
-      document.querySelector('.status-safe').style.opacity = '1';
+    var safePercent = city.safePercentage || 0;
+    var unsafePercent = city.unsafePercentage || 0;
+    var noResponsePercent = city.noresponsePercentage || 0;
+    
+    if (safePercent > 0) {
+      safeTag.style.opacity = '1';
+      safeTag.style.transform = 'scale(1)';
     }
-    document.querySelector('.status-noresponse').style.opacity = '1';
+    if (unsafePercent > 0) {
+      unsafeTag.style.opacity = '1';
+      unsafeTag.style.transform = 'scale(1)';
+    }
+    if (noResponsePercent > 0) {
+      noResponseTag.style.opacity = '1';
+      noResponseTag.style.transform = 'scale(1)';
+    }
     
     var enhancedItemsList = document.getElementById('enhancedItemsList');
     enhancedItemsList.innerHTML = "";
+    if (city.items && Array.isArray(city.items)) {
     city.items.forEach(item => {
+        var parts = item.split(':');
+        var itemName = parts[0].trim();
+        var itemPercent = parts[1] ? parseFloat(parts[1].trim()) : 0;
+        
       var li = document.createElement('li');
-      li.textContent = item;
+        li.style.padding = '10px 0';
+        li.style.borderBottom = '1px solid #e5e7eb';
+        
+        var itemContainer = document.createElement('div');
+        itemContainer.style.display = 'flex';
+        itemContainer.style.justifyContent = 'space-between';
+        itemContainer.style.alignItems = 'center';
+        itemContainer.style.marginBottom = '8px';
+        
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = itemName.charAt(0).toUpperCase() + itemName.slice(1);
+        nameSpan.style.fontWeight = '500';
+        nameSpan.style.color = '#374151';
+        nameSpan.style.fontSize = '13px';
+        
+        var percentSpan = document.createElement('span');
+        percentSpan.textContent = itemPercent + '%';
+        percentSpan.style.background = '#3B82F6';
+        percentSpan.style.color = 'white';
+        percentSpan.style.padding = '4px 10px';
+        percentSpan.style.borderRadius = '12px';
+        percentSpan.style.fontSize = '11px';
+        percentSpan.style.fontWeight = 'bold';
+        percentSpan.style.minWidth = '45px';
+        percentSpan.style.textAlign = 'center';
+        
+        itemContainer.appendChild(nameSpan);
+        itemContainer.appendChild(percentSpan);
+        
+        var progressBarContainer = document.createElement('div');
+        progressBarContainer.style.width = '100%';
+        progressBarContainer.style.height = '6px';
+        progressBarContainer.style.background = '#e5e7eb';
+        progressBarContainer.style.borderRadius = '3px';
+        progressBarContainer.style.overflow = 'hidden';
+        progressBarContainer.style.marginTop = '4px';
+        
+        var progressBar = document.createElement('div');
+        progressBar.style.width = itemPercent + '%';
+        progressBar.style.height = '100%';
+        progressBar.style.background = itemPercent >= 15 ? '#10B981' : itemPercent >= 10 ? '#f59e0b' : '#e74c3c';
+        progressBar.style.transition = 'width 0.5s ease';
+        progressBar.style.borderRadius = '3px';
+        
+        progressBarContainer.appendChild(progressBar);
+        
+        li.appendChild(itemContainer);
+        li.appendChild(progressBarContainer);
       enhancedItemsList.appendChild(li);
     });
+    }
     
     createEnhancedPieChart(city);
     enhancedPanel.style.display = 'block';
@@ -460,26 +676,18 @@ const MapScreen = () => {
       enhancedChart.destroy();
     }
     
-    let unsafeData, safeData;
-    if (city.status === 'High risk') {
-      unsafeData = 70;
-      safeData = 20;
-    } else if (city.status === 'Moderate risk') {
-      unsafeData = 10;
-      safeData = 70;
-    } else {
-      unsafeData = 30;
-      safeData = 30;
-    }
+    const safeData = city.safePercentage || 0;
+    const unsafeData = city.unsafePercentage || 0;
+    const noResponseData = city.noresponsePercentage || 0;
     
     enhancedChart = new Chart(enhancedCtx, {
       type: 'pie',
       data: {
-        labels: ['High risk', 'Moderate risk', 'No Response'],
+        labels: ['Safe', 'Unsafe', 'No Response'],
         datasets: [{
-          data: [unsafeData, safeData, 10],
-          backgroundColor: ['#e74c3c', '#f39c12', '#ecf0f1'],
-          borderColor: ['#c0392b', '#e67e22', '#bdc3c7'],
+          data: [safeData, unsafeData, noResponseData],
+          backgroundColor: ['#10B981', '#e74c3c', '#ecf0f1'],
+          borderColor: ['#059669', '#c0392b', '#bdc3c7'],
           borderWidth: 1,
           hoverOffset: 8
         }]
@@ -545,18 +753,16 @@ const MapScreen = () => {
   animateCircles();
 
   function showCityFromReactNative(cityName) {
-    var city = cities.find(c => c.name === cityName);
+    var city = cities.find(c => c.name === cityName || c.city === cityName);
     if (city) {
-      // Use flyTo for smoother animation with better performance
       map.flyTo(city.coords, 7, {
-        duration: 1.5, // Slightly longer for smoother transition
+        duration: 1.5,
         easeLinearity: 0.25
       });
       
-      // Show the info panel after the animation completes
       setTimeout(function() {
         showEnhancedInfo(city);
-      }, 1600); // Match the animation duration + small buffer
+      }, 1600);
     }
   }
 </script>
@@ -564,150 +770,200 @@ const MapScreen = () => {
 </html>
 `;
 
-  const citiesData = [
-    { 
-      name: 'Yangon', 
-      status: 'High risk', 
-      time: '4 mins ago',
-      locals: 1500,
-      waterLevel: '2.1m',
-      items: ['water', 'rice', 'blankets', 'medical kits']
-    },
-    { 
-      name: 'Mandalay', 
-      status: 'High risk', 
-      time: '6 mins ago',
-      locals: 1200,
-      waterLevel: '1.8m',
-      items: ['food', 'medicine', 'fuel', 'emergency shelters']
-    },
-    { 
-      name: 'Bago', 
-      status: 'Moderate risk', 
-      time: '8 mins ago',
-      locals: 1000,
-      waterLevel: '1.2m',
-      items: ['clothes', 'water', 'flashlights', 'first aid']
-    },
-    { 
-      name: 'Taunggyi', 
-      status: 'Moderate risk', 
-      time: '15 mins ago',
-      locals: 900,
-      waterLevel: '0.9m',
-      items: ['first aid', 'rice', 'emergency blankets']
-    },
-    { 
-      name: 'Naypyidaw', 
-      status: 'Moderate risk', 
-      time: '20 mins ago',
-      locals: 800,
-      waterLevel: '0.7m',
-      items: ['medical aid', 'tents', 'clean water']
-    }
-  ];
+  const citiesListData = useMemo(() => {
+    if (!floodingData?.data) return [];
 
-  const sortedCities = [...citiesData].sort((a, b) => {
-    if (a.status === 'High risk' && b.status !== 'High risk') return -1;
-    if (a.status !== 'High risk' && b.status === 'High risk') return 1;
-    const timeA = parseInt(a.time);
-    const timeB = parseInt(b.time);
-    return timeA - timeB;
-  });
+    return floodingData.data.map((item) => ({
+      name: item.city,
+      township: item.township,
+      fullName: `${item.city} - ${item.township}`,
+      status: item.status === "High Risk" ? "High risk" : "Moderate risk",
+      chance: item.chance,
+      locals: item.locals,
+      items: Object.keys(item.items),
+    }));
+  }, [floodingData]);
 
-  const handleCityClick = (city) => {
+  const sortedCities = useMemo(() => {
+    return [...citiesListData].sort((a, b) => {
+      if (a.status === "High risk" && b.status !== "High risk") return -1;
+      if (a.status !== "High risk" && b.status === "High risk") return 1;
+      return b.chance - a.chance;
+    });
+  }, [citiesListData]);
+
+  const handleCityClick = (city: { fullName: string }) => {
     if (webViewRef.current) {
       webViewRef.current.injectJavaScript(`
-        showCityFromReactNative('${city.name}');
+        showCityFromReactNative('${city.fullName}');
         true;
       `);
     }
   };
 
-  const getRiskColor = (status) => {
-    return status === 'High risk' ? '#e74c3c' : '#f39c12';
+  const getRiskColor = (status: string) => {
+    return status === "High risk" ? "#e74c3c" : "#f39c12";
   };
 
-  const getRiskBackground = (status) => {
-    return status === 'High risk' ? '#e74c3c' : '#f39c12';
+  const getRiskBackground = (status: string) => {
+    return status === "High risk" ? "#e74c3c" : "#f39c12";
   };
 
-  const getBorderColor = (status) => {
-    return status === 'High risk' ? '#c0392b' : '#e67e22';
+  const getBorderColor = (status: string) => {
+    return status === "High risk" ? "#c0392b" : "#e67e22";
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-blue-50" edges={["top", "bottom"]}>
+        <Box className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-500 mt-4">Loading flood data...</Text>
+        </Box>
+      </SafeAreaView>
+    );
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-blue-50" edges={["top", "bottom"]}>
+        <Box className="flex-1 items-center justify-center px-4">
+          <Text className="text-gray-700 text-lg font-semibold text-center">
+            Failed to load flood data
+          </Text>
+          <Text className="text-gray-500 text-sm mt-2 text-center">
+            Please try again later
+          </Text>
+        </Box>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-blue-50">
-      {/* Map Section */}
-      <Box className="h-1/2 bg-gray-100">
-        <WebView 
+    <SafeAreaView className="flex-1 bg-blue-50" edges={["top", "bottom"]}>
+      <View style={{ flex: 1 }}>
+        <WebView
           ref={webViewRef}
-          originWhitelist={['*']} 
-          source={{ html }} 
-          className="flex-1"
+          originWhitelist={["*"]}
+          source={{ html }}
+          style={{ flex: 1 }}
+          onLoadEnd={injectCitiesData}
         />
-      </Box>
+      </View>
 
-      {/* Cities Data Section */}
-      <Box className="flex-1 p-4 bg-white">
-        <Heading className="text-2xl font-bold text-gray-800 mb-4">
-          Flood Risk Areas
-        </Heading>
-        
-        <ScrollView 
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-        >
-          {sortedCities.map((city, index) => (
-            <TouchableOpacity 
-              key={index} 
-              className="bg-gray-50 rounded-xl p-4 mb-3 border-l-4 shadow-sm"
-              style={{ borderLeftColor: getBorderColor(city.status) }}
-              onPress={() => handleCityClick(city)}
-            >
-              <Box className="flex-row items-center">
-                {/* Risk Indicator */}
-                <Box 
-                  className="w-10 h-10 rounded-full justify-center items-center mr-3"
-                  style={{ backgroundColor: getRiskBackground(city.status) }}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: SCREEN_HEIGHT * 0.5,
+          backgroundColor: "white",
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 10,
+          zIndex: 1000,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Box className="px-4 pt-4 pb-3">
+            <Box className="flex-row items-center justify-between">
+              <Heading className="text-lg font-semibold text-gray-800">
+                Flood Risk Areas
+              </Heading>
+              <TouchableOpacity
+                onPress={() => refetch()}
+                disabled={isRefetching}
+                className="p-1.5 rounded-full bg-blue-50"
+                style={{ opacity: isRefetching ? 0.6 : 1 }}
+              >
+                <Animated.View
+                  style={{
+                    transform: [{ rotate: rotation }],
+                  }}
                 >
-                  <Text className="text-white text-xs font-bold">
-                    {city.status === 'High risk' ? 'HIGH' : 'MOD'}
-                  </Text>
-                </Box>
-                
-                {/* City Details */}
-                <Box className="flex-1">
-                  <Text className="text-lg font-bold text-gray-800">
-                    {city.name}
-                  </Text>
-                  <Text className="text-gray-600 text-sm mb-1">
-                    {city.time}
-                  </Text>
-                  <Box className="flex-row gap-3">
-                    <Text className="text-gray-500 text-xs">
-                      👥 {city.locals} locals
-                    </Text>
-                    <Text className="text-gray-500 text-xs">
-                      🌊 {city.waterLevel}
-                    </Text>
-                  </Box>
-                </Box>
-                
-                {/* Status Badge */}
-                <Box 
-                  className="px-2 py-1 rounded-lg"
-                  style={{ backgroundColor: getRiskColor(city.status) }}
-                >
-                  <Text className="text-white text-xs font-bold uppercase">
-                    {city.status}
-                  </Text>
-                </Box>
+                  <RefreshCw size={16} color="#3B82F6" />
+                </Animated.View>
+              </TouchableOpacity>
+            </Box>
+          </Box>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingBottom: 20,
+            }}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            scrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
+          >
+            {sortedCities.length === 0 ? (
+              <Box className="items-center justify-center py-8">
+                <Text className="text-gray-400 text-sm">
+                  No flood data available
+                </Text>
               </Box>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </Box>
+            ) : (
+              sortedCities.map((city, index) => (
+                <TouchableOpacity
+                  key={`${city.name}-${city.township}-${index}`}
+                  className="bg-white rounded-lg p-3 mb-2"
+                  style={{
+                    borderLeftWidth: 3,
+                    borderLeftColor: getBorderColor(city.status),
+                  }}
+                  onPress={() => handleCityClick(city)}
+                >
+                  <Box className="flex-row items-center">
+                    <Box
+                      className="w-8 h-8 rounded-full justify-center items-center mr-3"
+                      style={{
+                        backgroundColor: getRiskBackground(city.status),
+                      }}
+                    >
+                      <Text className="text-white text-xs font-bold">
+                        {city.status === "High risk" ? "H" : "M"}
+                      </Text>
+                    </Box>
+
+                    <Box className="flex-1">
+                      <Text className="text-base font-semibold text-gray-800">
+                        {city.name}
+                      </Text>
+                      <Text className="text-gray-500 text-xs mb-1">
+                        {city.township}
+                      </Text>
+                      <Box className="flex-row gap-2">
+                        <Text className="text-gray-400 text-xs">
+                          {city.locals.toLocaleString()} locals
+                        </Text>
+                        <Text className="text-gray-400 text-xs">
+                          {city.chance}% chance
+                        </Text>
+                      </Box>
+                    </Box>
+
+                    <Box
+                      className="px-2 py-0.5 rounded"
+                      style={{ backgroundColor: getRiskColor(city.status) }}
+                    >
+                      <Text className="text-white text-xs font-semibold">
+                        {city.status}
+                      </Text>
+                    </Box>
+                  </Box>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
