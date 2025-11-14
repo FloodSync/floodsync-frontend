@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/auth-store";
-import { authApi, LoginRequest, RegisterRequest } from "@/lib/api/auth";
+import { authApi, LoginRequest, RegisterRequest, User } from "@/lib/api/auth";
 import { notificationService } from "@/lib/notifications/notification-service";
 
 export const useLogin = () => {
@@ -61,7 +61,6 @@ export const useLogout = () => {
       return authApi.logout(token);
     },
     onSuccess: async () => {
-      // Unregister push token before clearing auth
       if (token) {
         try {
           await notificationService.unregisterPushToken(token);
@@ -71,10 +70,9 @@ export const useLogout = () => {
       }
       clearAuth();
       queryClient.clear();
-      router.replace("/(auth)/login");
+      router.replace("/tabs/(tabs)/home");
     },
     onError: async () => {
-      // Unregister push token even on error
       if (token) {
         try {
           await notificationService.unregisterPushToken(token);
@@ -84,7 +82,27 @@ export const useLogout = () => {
       }
       clearAuth();
       queryClient.clear();
-      router.replace("/(auth)/login");
+      router.replace("/tabs/(tabs)/home");
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  const { user, token, setAuth } = useAuthStore();
+
+  return useMutation({
+    mutationFn: (
+      data: Partial<Omit<User, "_id" | "createdAt" | "updatedAt" | "friends">>
+    ) => {
+      if (!token || !user?._id) throw new Error("No token or user ID");
+      return authApi.updateUser(token, user._id, data);
+    },
+    onSuccess: (response) => {
+      if (token) {
+        setAuth(response.user, token);
+        queryClient.setQueryData(["user", token], response.user);
+      }
     },
   });
 };

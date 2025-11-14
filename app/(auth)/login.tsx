@@ -7,7 +7,7 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
-  Image
+  Image,
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -46,17 +46,30 @@ const Login = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
-      <ScrollView 
-        contentContainerStyle={{ 
+      {/* Back Button Header */}
+      <Box className="flex-row items-center px-4 py-3 bg-blue-50">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="flex-row items-center"
+        >
+          <Ionicons name="arrow-back" size={24} color="#2563eb" />
+          <Text className="text-blue-600 font-semibold ml-2 text-base">
+            Back
+          </Text>
+        </TouchableOpacity>
+      </Box>
+
+      <ScrollView
+        contentContainerStyle={{
           padding: 20,
           flexGrow: 1,
-          justifyContent: 'center'
+          justifyContent: "center",
         }}
       >
         {/* App Logo */}
         <Box className="items-center mb-2">
-          <Image 
-            source={require('@/assets/images/logo.png')} 
+          <Image
+            source={require("@/assets/images/logo.png")}
             className="w-[150px] h-[150px] "
           />
         </Box>
@@ -116,12 +129,15 @@ const Login = () => {
           )}
         </TouchableOpacity>
 
-       <Text className="text-gray-600 text-center mt-4">
-  Don't have an account?{" "}
-  <Text className="text-blue-600 font-semibold" onPress={handleRegisterPress}>
-    Register
-  </Text>
-</Text>
+        <Text className="text-gray-600 text-center mt-4">
+          Don't have an account?{" "}
+          <Text
+            className="text-blue-600 font-semibold"
+            onPress={handleRegisterPress}
+          >
+            Register
+          </Text>
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );

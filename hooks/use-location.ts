@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import * as Location from "expo-location";
 import { useAuthStore } from "@/stores/auth-store";
 import { weatherApi } from "@/lib/api/weather";
-import { myanmarCities } from "@/lib/data/myanmar-locations";
+import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 
 interface Coordinates {
   latitude: number;
@@ -25,9 +25,9 @@ export const useLocation = () => {
         setError(null);
 
         if (isAuthenticated && user && user.city) {
-          const cityName = user.city;
+          const cityKey = user.city;
           
-          const cached = cachedCoordinatesRef.current.get(cityName);
+          const cached = cachedCoordinatesRef.current.get(cityKey);
           if (cached) {
             setCoordinates(cached);
             setLoading(false);
@@ -35,44 +35,54 @@ export const useLocation = () => {
           }
 
           const cityData = myanmarCities.find(
-            (c) => c.value.toLowerCase() === cityName.toLowerCase()
+            (c) => c.key === cityKey
           );
           
           if (cityData && cityData.latitude && cityData.longitude) {
+            const townshipData = user.township
+              ? myanmarTownships.find((t) => t.key === user.township)
+              : null;
+
             const userCoordinates: Coordinates = {
               latitude: cityData.latitude,
               longitude: cityData.longitude,
-              city: user.city,
-              township: user.township,
+              city: cityData.value,
+              township: townshipData?.value,
             };
             
-            cachedCoordinatesRef.current.set(cityName, userCoordinates);
+            cachedCoordinatesRef.current.set(cityKey, userCoordinates);
             setCoordinates(userCoordinates);
             setLoading(false);
             return;
           }
 
-          try {
-            const geocodeResult = await weatherApi.geocode(cityName);
-            if (geocodeResult.results && geocodeResult.results.length > 0) {
-              const result = geocodeResult.results.find(
-                (r) => r.country === "Myanmar" || r.country === "MM"
-              ) || geocodeResult.results[0];
-              
-              const userCoordinates: Coordinates = {
-                latitude: result.latitude,
-                longitude: result.longitude,
-                city: user.city,
-                township: user.township,
-              };
-              
-              cachedCoordinatesRef.current.set(cityName, userCoordinates);
-              setCoordinates(userCoordinates);
-              setLoading(false);
-              return;
+          if (cityData && cityData.value) {
+            try {
+              const geocodeResult = await weatherApi.geocode(cityData.value);
+              if (geocodeResult.results && geocodeResult.results.length > 0) {
+                const result = geocodeResult.results.find(
+                  (r) => r.country === "Myanmar" || r.country === "MM"
+                ) || geocodeResult.results[0];
+                
+                const townshipData = user.township
+                  ? myanmarTownships.find((t) => t.key === user.township)
+                  : null;
+
+                const userCoordinates: Coordinates = {
+                  latitude: result.latitude,
+                  longitude: result.longitude,
+                  city: cityData.value,
+                  township: townshipData?.value,
+                };
+                
+                cachedCoordinatesRef.current.set(cityKey, userCoordinates);
+                setCoordinates(userCoordinates);
+                setLoading(false);
+                return;
+              }
+            } catch (err) {
+              console.warn("Geocoding failed for user city, falling back to GPS:", err);
             }
-          } catch (err) {
-            console.warn("Geocoding failed for user city, falling back to GPS:", err);
           }
         }
         const { status } = await Location.requestForegroundPermissionsAsync();

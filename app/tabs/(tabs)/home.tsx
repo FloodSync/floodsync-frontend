@@ -18,7 +18,6 @@ import { Pressable, View } from "react-native";
 import { router } from "expo-router";
 import WeatherStatus from "@/components/wather-status";
 import PrecipitationAnalysis from "@/components/precipitation-analysis";
-import FloodSafetyCheck from "@/components/flood-safety-check";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuthStore } from "@/stores/auth-store";
@@ -35,6 +34,7 @@ import {
   isDemoMode,
   getDemoFloodRisk,
 } from "@/lib/config/app-config";
+import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 
 const getWeatherCondition = (code: number, isDay: number): string => {
   if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
@@ -102,9 +102,21 @@ export default function HomeScreen() {
       return APP_CONFIG.DEMO_DATA.location;
     }
 
-    if (isAuthenticated && user) {
-      return `${user.city}, ${user.township}`;
+    if (isAuthenticated && user && user.city) {
+      const cityData = myanmarCities.find((c) => c.key === user.city);
+      const townshipData = user.township
+        ? myanmarTownships.find((t) => t.key === user.township)
+        : null;
+
+      const cityName = cityData?.value || user.city;
+      const townshipName = townshipData?.value || user.township || "";
+
+      if (townshipName) {
+        return `${cityName}, ${townshipName}`;
+      }
+      return cityName;
     }
+
     if (coordinates?.city) {
       if (coordinates.township) {
         return `${coordinates.city}, ${coordinates.township}`;
@@ -210,10 +222,6 @@ export default function HomeScreen() {
 
   const handleProfilePress = useCallback(() => {
     router.push("/(auth)/profile");
-  }, []);
-
-  const handleSafetyResponse = useCallback((isSafe: boolean) => {
-    console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
   }, []);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -334,11 +342,6 @@ export default function HomeScreen() {
             )}
           </Box>
         </Box>
-        <FloodSafetyCheck
-          floodRisk={floodRisk}
-          location={userLocation}
-          onResponseSubmitted={handleSafetyResponse}
-        />
         {!floodQuery.isLoading && floodRisk >= 70 && (
           <Box className="mx-4 mb-2  bg-orange-100 border-l-4 border-orange-500 rounded-lg p-4">
             <HStack space="sm" className="items-start">
@@ -433,10 +436,7 @@ export default function HomeScreen() {
                     : floodRisk < 70
                     ? "Near Capacity"
                     : "At Capacity",
-                alertMessage:
-                  floodRisk >= 70
-                    ? t("alertMessage")
-                    : undefined,
+                alertMessage: floodRisk >= 70 ? t("alertMessage") : undefined,
               }}
             />
           )}

@@ -1,59 +1,67 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Pressable,
   Alert,
   View,
-  SafeAreaView
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-// import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "@/stores/auth-store";
+import { useUpdateUser, useCurrentUser } from "@/hooks/use-auth";
+import { useLogout } from "@/hooks/use-auth";
+import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 
 const Profile = () => {
-  const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("john.doe@example.com");
-  const [phone, setPhone] = useState("+95 9123 456 789");
-  const [city, setCity] = useState("1");
-  const [township, setTownship] = useState("3");
+  const { user: authUser, token, isAuthenticated } = useAuthStore();
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const updateUserMutation = useUpdateUser();
+  const logoutMutation = useLogout();
+
+  const user = currentUser || authUser;
+
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [township, setTownship] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const cities = [
-    { key: "1", value: "Yangon" },
-    { key: "2", value: "Mandalay" },
-    { key: "3", value: "Naypyidaw" },
-    { key: "4", value: "Bago" },
-    { key: "5", value: "Taunggyi" },
-  ];
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setCity(user.city || "");
+      setTownship(user.township || "");
+    }
+  }, [user]);
 
-  const townships = [
-    { key: "1", value: "Lanmadaw", cityId: "1" },
-    { key: "2", value: "Hlaing", cityId: "1" },
-    { key: "3", value: "Kamayut", cityId: "1" },
-    { key: "4", value: "Mayangone", cityId: "1" },
-    { key: "5", value: "Sanchaung", cityId: "1" },
-    { key: "6", value: "Chanmyathazi", cityId: "2" },
-    { key: "7", value: "Maharaing", cityId: "2" },
-    { key: "8", value: "Chanayethazan", cityId: "2" },
-    { key: "9", value: "Pyigyidagun", cityId: "2" },
-    { key: "10", value: "Amarapura", cityId: "2" },
-    { key: "11", value: "Zabuthiri", cityId: "3" },
-    { key: "12", value: "Pobbathiri", cityId: "3" },
-    { key: "13", value: "Dekkhinathiri", cityId: "3" },
-    { key: "14", value: "Ottarathiri", cityId: "3" },
-  ];
+  useEffect(() => {
+    if (city && isEditing) {
+      const newTownships = myanmarTownships.filter((t) => t.cityId === city);
+      const currentTownshipExists = newTownships.some(
+        (t) => t.key === township
+      );
+      if (!currentTownshipExists) {
+        setTownship("");
+      }
+    }
+  }, [city, isEditing]);
 
-  // Filter townships based on selected city
+  const cities = myanmarCities.map((city) => ({
+    key: city.key,
+    value: city.value,
+  }));
+
   const filteredTownships = city
-    ? townships.filter((township) => township.cityId === city)
-    : townships;
+    ? myanmarTownships
+        .filter((t) => t.cityId === city)
+        .map((t) => ({ key: t.key, value: t.value }))
+    : [];
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
@@ -61,19 +69,29 @@ const Profile = () => {
       return;
     }
 
-    setLoading(true);
+    if (!city) {
+      Alert.alert("Error", "Please select a city");
+      return;
+    }
 
-    // Simulate API call
+    if (!township) {
+      Alert.alert("Error", "Please select a township");
+      return;
+    }
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      console.log("Profile updated:", { name, email, phone, city, township });
+      await updateUserMutation.mutateAsync({
+        name: name.trim(),
+        city,
+        township,
+      });
       setIsEditing(false);
       Alert.alert("Success", "Profile updated successfully!");
-    } catch (error) {
-      Alert.alert("Error", "Failed to update profile. Please try again.");
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error?.message || "Failed to update profile. Please try again."
+      );
     }
   };
 
@@ -83,12 +101,11 @@ const Profile = () => {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    // Reset to original values
-    setName("John Doe");
-    setEmail("john.doe@example.com");
-    setPhone("+95 9123 456 789");
-    setCity("1");
-    setTownship("3");
+    if (user) {
+      setName(user.name || "");
+      setCity(user.city || "");
+      setTownship(user.township || "");
+    }
   };
 
   const handleLogout = () => {
@@ -98,12 +115,58 @@ const Profile = () => {
         text: "Logout",
         style: "destructive",
         onPress: () => {
-          console.log("User logged out");
-          router.replace("/(auth)/login");
+          logoutMutation.mutate();
         },
       },
     ]);
   };
+
+  if (!isAuthenticated || !token) {
+    return (
+      <SafeAreaView className="flex-1 bg-blue-50">
+        <Box className="flex-1 items-center justify-center p-4">
+          <Text className="text-gray-600 text-center mb-4">
+            Please login to view your profile
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.replace("/(auth)/login")}
+            className="bg-blue-600 px-6 py-3 rounded-xl"
+          >
+            <Text className="text-white font-semibold">Go to Login</Text>
+          </TouchableOpacity>
+        </Box>
+      </SafeAreaView>
+    );
+  }
+
+  if (isLoadingUser) {
+    return (
+      <SafeAreaView className="flex-1 bg-blue-50">
+        <Box className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-600 mt-4">Loading profile...</Text>
+        </Box>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-blue-50">
+        <Box className="flex-1 items-center justify-center p-4">
+          <Text className="text-gray-600 text-center mb-4">
+            Unable to load user data
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="bg-blue-600 px-6 py-3 rounded-xl"
+          >
+            <Text className="text-white font-semibold">Go Back</Text>
+          </TouchableOpacity>
+        </Box>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-blue-50">
@@ -130,7 +193,7 @@ const Profile = () => {
             <Ionicons name="person" size={32} color="#2563eb" />
           </View>
           <Heading className="text-blue-800 text-2xl font-bold">{name}</Heading>
-          <Text className="text-gray-600 text-base mt-1">{email}</Text>
+          <Text className="text-gray-600 text-base mt-1">{user.email}</Text>
         </Box>
 
         {/* Profile Information Section */}
@@ -180,74 +243,90 @@ const Profile = () => {
             <View
               className={`p-4 rounded-xl border bg-gray-50 border-gray-200`}
             >
-              <Text className="text-gray-600">{email}</Text>
+              <Text className="text-gray-600">{user.email}</Text>
             </View>
             <Text className="text-gray-500 text-xs mt-1">
               Email cannot be changed
             </Text>
           </Box>
 
-          <Box className="mb-5">
-            <Text className="text-gray-700 mb-2 font-medium">Phone Number</Text>
-            <View
-              className={`p-4 rounded-xl border bg-gray-50 border-gray-200`}
-            >
-              <Text className="text-gray-600">{phone}</Text>
-            </View>
-            <Text className="text-gray-500 text-xs mt-1">
-              Phone number cannot be changed
-            </Text>
-          </Box>
+          {user.phone && (
+            <Box className="mb-5">
+              <Text className="text-gray-700 mb-2 font-medium">
+                Phone Number
+              </Text>
+              <View
+                className={`p-4 rounded-xl border bg-gray-50 border-gray-200`}
+              >
+                <Text className="text-gray-600">{user.phone}</Text>
+              </View>
+              <Text className="text-gray-500 text-xs mt-1">
+                Phone number cannot be changed
+              </Text>
+            </Box>
+          )}
 
           <Box className="mb-5">
             <Text className="text-gray-700 mb-2 font-medium">City</Text>
-            <SelectList
-              setSelected={setCity}
-              data={cities}
-              placeholder="Select City"
-              defaultOption={cities.find((c) => c.key === city)}
-              boxStyles={{
-                backgroundColor: isEditing ? "#f0f9ff" : "#f9fafb",
-                borderRadius: 12,
-                borderColor: isEditing ? "#bfdbfe" : "#e5e7eb",
-              }}
-              //   disabled={!isEditing}
-            />
+            {isEditing ? (
+              <SelectList
+                setSelected={setCity}
+                data={cities}
+                placeholder="Select City"
+                defaultOption={cities.find((c) => c.key === city)}
+                boxStyles={{
+                  backgroundColor: "#f0f9ff",
+                  borderRadius: 12,
+                  borderColor: "#bfdbfe",
+                }}
+              />
+            ) : (
+              <View className="p-4 rounded-xl border bg-gray-50 border-gray-200">
+                <Text className="text-gray-600">
+                  {cities.find((c) => c.key === city)?.value || "Not set"}
+                </Text>
+              </View>
+            )}
           </Box>
 
           <Box className="mb-6">
             <Text className="text-gray-700 mb-2 font-medium">Township</Text>
-            <SelectList
-              setSelected={setTownship}
-              data={filteredTownships}
-              placeholder="Select Township"
-              defaultOption={filteredTownships.find((t) => t.key === township)}
-              boxStyles={{
-                backgroundColor: isEditing ? "#f0f9ff" : "#f9fafb",
-                borderRadius: 12,
-                borderColor: isEditing ? "#bfdbfe" : "#e5e7eb",
-              }}
-              //   disabled={!isEditing}
-            />
+            {isEditing ? (
+              <SelectList
+                setSelected={setTownship}
+                data={filteredTownships}
+                placeholder="Select Township"
+                defaultOption={filteredTownships.find(
+                  (t) => t.key === township
+                )}
+                boxStyles={{
+                  backgroundColor: "#f0f9ff",
+                  borderRadius: 12,
+                  borderColor: "#bfdbfe",
+                }}
+              />
+            ) : (
+              <View className="p-4 rounded-xl border bg-gray-50 border-gray-200">
+                <Text className="text-gray-600">
+                  {filteredTownships.find((t) => t.key === township)?.value ||
+                    "Not set"}
+                </Text>
+              </View>
+            )}
           </Box>
 
           {isEditing && (
             <TouchableOpacity
               onPress={handleSaveProfile}
-              disabled={loading}
+              disabled={updateUserMutation.isPending}
               className={`bg-blue-600 p-4 rounded-xl flex-row justify-center items-center ${
-                loading ? "opacity-70" : ""
+                updateUserMutation.isPending ? "opacity-70" : ""
               }`}
             >
-              {loading ? (
+              {updateUserMutation.isPending ? (
                 <>
-                  <Ionicons
-                    name="refresh"
-                    size={20}
-                    color="white"
-                    className="mr-2"
-                  />
-                  <Text className="text-white text-center font-semibold text-lg">
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-white text-center font-semibold text-lg ml-2">
                     Saving...
                   </Text>
                 </>

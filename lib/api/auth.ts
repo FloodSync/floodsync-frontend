@@ -62,4 +62,19 @@ export const authApi = {
       }
     );
   },
+
+  updateUser: async (
+    token: string,
+    userId: string,
+    data: Partial<Omit<User, "_id" | "createdAt" | "updatedAt" | "friends">>
+  ): Promise<{ user: User; message?: string }> => {
+    return apiClient.authenticatedRequest<{ user: User; message?: string }>(
+      `/user/${userId}/update`,
+      token,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }
+    );
+  },
 };
