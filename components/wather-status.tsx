@@ -75,7 +75,7 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
 
   const getWeatherIcon = () => {
     const condition = weatherData.condition.toLowerCase();
-    const size = 80;
+    const size = 64;
 
     if (condition.includes("clear") || condition.includes("sunny")) {
       return <Sun size={size} color="#F59E0B" />;
@@ -117,24 +117,25 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
           {location}
         </Text>
       </VStack>
+      
       {/* Main Weather Card and Detailed Conditions */}
-      <HStack space="md" className="items-start">
-        {/* Detailed Conditions Cards - Moved to Left */}
+      <HStack space="md" className="items-stretch">
+        {/* Detailed Conditions Cards */}
         <VStack space="sm" className="flex-1">
           {/* Humidity */}
-          <Box className="bg-blue-50 rounded-xl p-3">
+          <Box className="bg-blue-50 rounded-xl p-3 min-h-[60px] justify-center">
             <HStack className="items-center justify-between">
-              <HStack space="sm" className="items-center">
+              <HStack space="sm" className="items-center flex-1">
                 <Droplet size={20} color="#3B82F6" />
                 <Text
-                  className="text-gray-700 text-sm font-medium"
+                  className="text-gray-700 text-sm font-medium flex-1"
                   style={{ fontFamily: "Z06-Walone-Regular" }}
                 >
                   {t("humidity")}
                 </Text>
               </HStack>
               <Text
-                className="text-gray-900 text-sm font-semibold"
+                className="text-gray-900 text-sm font-semibold ml-2"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
                 {weatherData.humidity}%
@@ -143,40 +144,43 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
           </Box>
 
           {/* Wind */}
-          <Box className="bg-blue-50 rounded-xl p-3">
+          <Box className="bg-blue-50 rounded-xl p-3 min-h-[60px] justify-center">
             <HStack className="items-center justify-between">
-              <HStack space="sm" className="items-center">
+              <HStack space="sm" className="items-center flex-1">
                 <Wind size={20} color="#3B82F6" />
                 <Text
-                  className="text-gray-700 text-sm font-medium"
+                  className="text-gray-700 text-sm font-medium flex-1"
                   style={{ fontFamily: "Z06-Walone-Regular" }}
                 >
                   {t("wind")}
                 </Text>
               </HStack>
               <Text
-                className="text-gray-900 text-sm font-semibold"
+                className="text-gray-900 text-sm font-semibold ml-2 text-right"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
-                {weatherData.windSpeed} km/h {weatherData.windDirection}
+                {weatherData.windSpeed} km/h{"\n"}
+                <Text className="text-gray-600 text-xs">
+                  {weatherData.windDirection}
+                </Text>
               </Text>
             </HStack>
           </Box>
 
           {/* Visibility */}
-          <Box className="bg-blue-50 rounded-xl p-3">
+          <Box className="bg-blue-50 rounded-xl p-3 min-h-[60px] justify-center">
             <HStack className="items-center justify-between">
-              <HStack space="sm" className="items-center">
+              <HStack space="sm" className="items-center flex-1">
                 <Eye size={20} color="#3B82F6" />
                 <Text
-                  className="text-gray-700 text-sm font-medium"
+                  className="text-gray-700 text-sm font-medium flex-1"
                   style={{ fontFamily: "Z06-Walone-Regular" }}
                 >
                   {t("visibility")}
                 </Text>
               </HStack>
               <Text
-                className="text-gray-900 text-sm font-semibold"
+                className="text-gray-900 text-sm font-semibold ml-2"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
                 {weatherData.visibility} mi
@@ -185,19 +189,19 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
           </Box>
 
           {/* Pressure */}
-          <Box className="bg-blue-50 rounded-xl p-3">
+          <Box className="bg-blue-50 rounded-xl p-3 min-h-[60px] justify-center">
             <HStack className="items-center justify-between">
-              <HStack space="sm" className="items-center">
+              <HStack space="sm" className="items-center flex-1">
                 <Gauge size={20} color="#3B82F6" />
                 <Text
-                  className="text-gray-700 text-sm font-medium"
+                  className="text-gray-700 text-sm font-medium flex-1"
                   style={{ fontFamily: "Z06-Walone-Regular" }}
                 >
                   {t("pressure")}
                 </Text>
               </HStack>
               <Text
-                className="text-gray-900 text-sm font-semibold"
+                className="text-gray-900 text-sm font-semibold ml-2"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
                 {weatherData.pressure} mb
@@ -206,20 +210,20 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
           </Box>
 
           {/* Precipitation/Rain */}
-          <Box className="bg-blue-50 rounded-xl p-3">
+          <Box className="bg-blue-50 rounded-xl p-3 min-h-[60px] justify-center">
             <HStack className="items-center justify-between">
-              <HStack space="sm" className="items-center">
+              <HStack space="sm" className="items-center flex-1">
                 <CloudRain size={20} color="#3B82F6" />
                 <Text
-                  className="text-gray-700 text-sm font-medium"
+                  className="text-gray-700 text-sm font-medium flex-1"
                   style={{ fontFamily: "Z06-Walone-Regular" }}
                 >
                   {t("rain") || "Rain"}
                 </Text>
               </HStack>
-              <VStack space="xs" className="items-end">
+              <VStack space="xs" className="items-end ml-2">
                 <Text
-                  className="text-gray-900 text-sm font-semibold"
+                  className="text-gray-900 text-sm font-semibold text-right"
                   style={{ fontFamily: "Z06-Walone-Bold" }}
                 >
                   {getPrecipitationLabel(
@@ -248,28 +252,29 @@ const WeatherStatus: React.FC<WeatherStatusProps> = ({
           </Box>
         </VStack>
 
-        {/* Main Weather Display with Icon - Moved to Right */}
-        <Box className="flex-1 bg-blue-50 rounded-xl p-4 h-full">
+        {/* Main Weather Display with Icon */}
+        <Box className="w-[140px] bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 justify-center">
           <VStack space="md" className="items-center">
             <Box className="items-center">{getWeatherIcon()}</Box>
             <VStack space="xs" className="items-center">
               <Text
-                className="text-gray-900 text-3xl"
+                className="text-gray-900 text-2xl font-bold"
                 style={{ fontFamily: "Z06-Walone-Bold" }}
               >
                 {weatherData.temperature}°
               </Text>
               <Text
-                className="text-gray-700 text-base text-center"
+                className="text-gray-700 text-sm text-center leading-tight"
                 style={{ fontFamily: "Z06-Walone-Regular" }}
+                numberOfLines={2}
               >
                 {weatherData.condition}
               </Text>
               <Text
-                className="text-gray-500 text-sm"
+                className="text-gray-500 text-xs text-center"
                 style={{ fontFamily: "Z06-Walone-Regular" }}
               >
-                {t("feelsLike")} {weatherData.feelsLike}°C
+                {t("feelsLike")} {weatherData.feelsLike}°
               </Text>
             </VStack>
           </VStack>
