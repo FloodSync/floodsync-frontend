@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  process.env.EXPO_PUBLIC_API_URL || "https://investigations-regarding-rays-semi.trycloudflare.com/api/v1";
 
 export interface ApiError {
   msg?: string;

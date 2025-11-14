@@ -1,6 +1,11 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Navigation, LayoutDashboard, AlertTriangle } from "lucide-react-native";
+import {
+  Navigation,
+  LayoutDashboard,
+  AlertTriangle,
+  Book,
+} from "lucide-react-native";
 import { Platform } from "react-native";
 
 function TabBarIcon({
@@ -55,7 +60,11 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon Icon={LayoutDashboard} color={color} focused={focused} />
+            <TabBarIcon
+              Icon={LayoutDashboard}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -65,6 +74,15 @@ export default function TabLayout() {
           title: "Notifications",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon Icon={AlertTriangle} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="guide"
+        options={{
+          title: "Guide",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon Icon={Book} color={color} focused={focused} />
           ),
         }}
       />

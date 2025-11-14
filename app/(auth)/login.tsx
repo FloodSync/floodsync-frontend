@@ -69,8 +69,9 @@ const Login = () => {
         {/* App Logo */}
         <Box className="items-center mb-2">
           <Image
-            source={require("@/assets/images/logo.png")}
-            className="w-[150px] h-[150px] "
+            source={require("@/assets/images/app_logo.png")}
+            className="w-[150px] h-[150px]"
+            resizeMode="contain"
           />
         </Box>
 

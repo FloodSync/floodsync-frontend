@@ -35,6 +35,7 @@ import {
   getDemoFloodRisk,
 } from "@/lib/config/app-config";
 import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
+import FloodSafetyCheck from "@/components/flood-safety-check";
 
 const getWeatherCondition = (code: number, isDay: number): string => {
   if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
@@ -224,6 +225,11 @@ export default function HomeScreen() {
     router.push("/(auth)/profile");
   }, []);
 
+  const handleSafetyResponse = useCallback((isSafe: boolean) => {
+    console.log("User safety status:", isSafe ? "Safe" : "Not Safe");
+    // You can add additional logic here if needed
+  }, []);
+
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -289,8 +295,17 @@ export default function HomeScreen() {
                   onPress={handleProfilePress}
                   disabled={logoutMutation.isPending}
                 >
-                  <View className="bg-blue-100 rounded-full p-2">
-                    <User size={20} color="#3B82F6" />
+                  <View
+                    className="bg-blue-600 rounded-full p-2.5 shadow-md"
+                    style={{
+                      shadowColor: "#3B82F6",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 3,
+                      elevation: 4,
+                    }}
+                  >
+                    <User size={22} color="#FFFFFF" strokeWidth={2.5} />
                   </View>
                 </Pressable>
               ) : (
@@ -328,15 +343,23 @@ export default function HomeScreen() {
               </Text>
             )}
           </HStack>
-          <Box className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <Box
+            className="h-4 bg-gray-200 rounded-full overflow-hidden shadow-sm"
+            style={{ elevation: 2 }}
+          >
             {floodQuery.isLoading ? (
               <Box className="h-full bg-gray-300 rounded-full" />
             ) : (
               <Box
-                className="h-full rounded-full"
+                className="h-full rounded-full shadow-md"
                 style={{
                   width: `${Math.max(floodRisk, 5)}%`,
                   backgroundColor: getFloodRiskColor(floodRisk),
+                  shadowColor: getFloodRiskColor(floodRisk),
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }}
               />
             )}
@@ -363,6 +386,12 @@ export default function HomeScreen() {
             </HStack>
           </Box>
         )}
+
+        <FloodSafetyCheck
+          floodRisk={floodRisk}
+          location={userLocation}
+          onResponseSubmitted={handleSafetyResponse}
+        />
 
         <Box className="bg-white px-4 mx-4 mt-2 rounded-xl py-4">
           {locationLoading || weatherQuery.isLoading ? (

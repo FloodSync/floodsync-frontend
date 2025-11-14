@@ -21,30 +21,36 @@ import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 const validateName = (name: string) => {
   if (!name.trim()) return "Name is required";
   if (name.trim().length < 2) return "Name must be at least 2 characters";
-  if (!/^[a-zA-Z\s]+$/.test(name.trim())) return "Name can only contain letters and spaces";
+  if (!/^[a-zA-Z\s]+$/.test(name.trim()))
+    return "Name can only contain letters and spaces";
   return null;
 };
 
 const validateEmail = (email: string) => {
   if (!email.trim()) return "Email is required";
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) return "Please enter a valid email address";
+  if (!emailRegex.test(email.trim()))
+    return "Please enter a valid email address";
   return null;
 };
 
 const validatePassword = (password: string) => {
   if (!password) return "Password is required";
   if (password.length < 6) return "Password must be at least 6 characters";
-  if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return "Password must contain both uppercase and lowercase letters";
-  if (!/(?=.*\d)/.test(password)) return "Password must contain at least one number";
+  if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password))
+    return "Password must contain both uppercase and lowercase letters";
+  if (!/(?=.*\d)/.test(password))
+    return "Password must contain at least one number";
   return null;
 };
 
 const validatePhone = (phone: string) => {
   if (!phone.trim()) return "Phone number is required";
   const phoneRegex = /^[0-9+\-\s()]{10,}$/;
-  if (!phoneRegex.test(phone.trim())) return "Please enter a valid phone number";
-  if (phone.replace(/\D/g, '').length < 10) return "Phone number must be at least 10 digits";
+  if (!phoneRegex.test(phone.trim()))
+    return "Please enter a valid phone number";
+  if (phone.replace(/\D/g, "").length < 10)
+    return "Phone number must be at least 10 digits";
   return null;
 };
 
@@ -74,7 +80,7 @@ const Register = () => {
     password: "",
     phone: "",
     city: "",
-    township: ""
+    township: "",
   });
 
   // Add validation function for each step
@@ -85,7 +91,7 @@ const Register = () => {
       password: "",
       phone: "",
       city: "",
-      township: ""
+      township: "",
     };
 
     let isValid = true;
@@ -132,7 +138,6 @@ const Register = () => {
     return isValid;
   };
 
-
   const registerMutation = useRegister();
 
   const handleLoginPress = useCallback(() => {
@@ -167,11 +172,21 @@ const Register = () => {
     const step3Valid = validateStep(3);
 
     if (!step1Valid || !step2Valid || !step3Valid) {
-      Alert.alert("Validation Error", "Please fix all validation errors before submitting");
+      Alert.alert(
+        "Validation Error",
+        "Please fix all validation errors before submitting"
+      );
       return;
     }
 
-    if (!name.trim() || !email.trim() || !password.trim() || !phone.trim() || !city || !township) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !phone.trim() ||
+      !city ||
+      !township
+    ) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -199,9 +214,9 @@ const Register = () => {
   };
 
   const clearError = (field: string) => {
-    setValidationErrors(prev => ({
+    setValidationErrors((prev) => ({
       ...prev,
-      [field]: ""
+      [field]: "",
     }));
   };
 
@@ -237,8 +252,9 @@ const Register = () => {
       <Box className="mb-4">
         <Text className="text-gray-700 mb-1">Full Name</Text>
         <TextInput
-          className={`bg-white p-3 rounded-2xl border ${validationErrors.name ? "border-red-500" : "border-gray-300"
-            }`}
+          className={`bg-white p-3 rounded-2xl border ${
+            validationErrors.name ? "border-red-500" : "border-gray-300"
+          }`}
           placeholder="Enter your name"
           value={name}
           onChangeText={(text) => {
@@ -247,15 +263,18 @@ const Register = () => {
           }}
         />
         {validationErrors.name ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.name}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.name}
+          </Text>
         ) : null}
       </Box>
 
       <Box className="mb-6">
         <Text className="text-gray-700 mb-1">Email</Text>
         <TextInput
-          className={`bg-white p-3 rounded-2xl border ${validationErrors.email ? "border-red-500" : "border-gray-300"
-            }`}
+          className={`bg-white p-3 rounded-2xl border ${
+            validationErrors.email ? "border-red-500" : "border-gray-300"
+          }`}
           placeholder="Enter your email"
           keyboardType="email-address"
           value={email}
@@ -265,7 +284,9 @@ const Register = () => {
           }}
         />
         {validationErrors.email ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.email}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.email}
+          </Text>
         ) : null}
       </Box>
     </>
@@ -277,8 +298,9 @@ const Register = () => {
       <Box className="mb-4 relative">
         <Text className="text-gray-700 mb-1">Password</Text>
         <TextInput
-          className={`bg-white p-3 rounded-2xl border ${validationErrors.password ? "border-red-500" : "border-gray-300"
-            }`}
+          className={`bg-white p-3 rounded-2xl border ${
+            validationErrors.password ? "border-red-500" : "border-gray-300"
+          }`}
           placeholder="Enter your password"
           secureTextEntry={!showPassword}
           value={password}
@@ -288,7 +310,9 @@ const Register = () => {
           }}
         />
         {validationErrors.password ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.password}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.password}
+          </Text>
         ) : null}
         <Pressable
           onPress={() => setShowPassword(!showPassword)}
@@ -305,8 +329,9 @@ const Register = () => {
       <Box className="mb-6">
         <Text className="text-gray-700 mb-1">Phone Number</Text>
         <TextInput
-          className={`bg-white p-3 rounded-2xl border ${validationErrors.phone ? "border-red-500" : "border-gray-300"
-            }`}
+          className={`bg-white p-3 rounded-2xl border ${
+            validationErrors.phone ? "border-red-500" : "border-gray-300"
+          }`}
           placeholder="Enter your phone number"
           keyboardType="phone-pad"
           value={phone}
@@ -316,7 +341,9 @@ const Register = () => {
           }}
         />
         {validationErrors.phone ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.phone}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.phone}
+          </Text>
         ) : null}
       </Box>
     </>
@@ -339,13 +366,15 @@ const Register = () => {
             backgroundColor: "white",
             borderRadius: 12,
             borderColor: validationErrors.city ? "#ef4444" : "#d1d5db",
-            borderWidth: 1
+            borderWidth: 1,
           }}
           inputStyles={{ color: "#000" }}
           dropdownTextStyles={{ color: "#000" }}
         />
         {validationErrors.city ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.city}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.city}
+          </Text>
         ) : null}
       </Box>
 
@@ -358,9 +387,7 @@ const Register = () => {
           }}
           data={filteredTownships}
           placeholder={
-            city
-              ? "Search or select township..."
-              : "Please select a city first"
+            city ? "Search or select township..." : "Please select a city first"
           }
           searchPlaceholder="Search township..."
           boxStyles={{
@@ -368,13 +395,15 @@ const Register = () => {
             borderRadius: 12,
             opacity: city ? 1 : 0.6,
             borderColor: validationErrors.township ? "#ef4444" : "#d1d5db",
-            borderWidth: 1
+            borderWidth: 1,
           }}
           inputStyles={{ color: "#000" }}
           dropdownTextStyles={{ color: "#000" }}
         />
         {validationErrors.township ? (
-          <Text className="text-red-500 text-sm mt-1">{validationErrors.township}</Text>
+          <Text className="text-red-500 text-sm mt-1">
+            {validationErrors.township}
+          </Text>
         ) : null}
       </Box>
     </>
@@ -386,37 +415,55 @@ const Register = () => {
         contentContainerStyle={{
           padding: 20,
           flexGrow: 1,
-          justifyContent: 'center' // This centers the content vertically
+          justifyContent: "center", // This centers the content vertically
         }}
       >
         {/* App Logo */}
         <Box className="items-center mb-8">
           <Image
-            source={require('@/assets/images/logo.png')}
+            source={require("@/assets/images/app_logo.png")}
             className="w-[150px] h-[150px] mb-4"
             resizeMode="contain"
           />
         </Box>
 
-        {/* Progress Indicator */}
-        <Box className="flex-row justify-center mb-6">
+        {/* Progress Indicator - Enhanced */}
+        <Box className="flex-row justify-center items-center mb-6">
           {[1, 2, 3].map((step) => (
             <Box key={step} className="flex-row items-center">
               <Box
-                className={`w-8 h-8 rounded-full items-center justify-center ${currentStep >= step ? "bg-blue-600" : "bg-gray-300"
-                  }`}
+                className={`w-10 h-10 rounded-full items-center justify-center shadow-md ${
+                  currentStep >= step ? "bg-blue-600" : "bg-gray-200"
+                }`}
+                style={{
+                  borderWidth: 2,
+                  borderColor: currentStep >= step ? "#60A5FA" : "#D1D5DB",
+                  shadowColor: currentStep >= step ? "#3B82F6" : "#9CA3AF",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 3,
+                  elevation: 4,
+                }}
               >
-                <Text
-                  className={`font-semibold ${currentStep >= step ? "text-white" : "text-gray-600"
+                {currentStep > step ? (
+                  <Ionicons name="checkmark" size={20} color="white" />
+                ) : (
+                  <Text
+                    className={`font-bold text-base ${
+                      currentStep >= step ? "text-white" : "text-gray-500"
                     }`}
-                >
-                  {step}
-                </Text>
+                    style={{ fontFamily: "Z06-Walone-Bold" }}
+                  >
+                    {step}
+                  </Text>
+                )}
               </Box>
               {step < 3 && (
                 <Box
-                  className={`w-8 h-1 mx-1 ${currentStep > step ? "bg-blue-600" : "bg-gray-300"
-                    }`}
+                  className={`h-1 mx-2 ${
+                    currentStep > step ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                  style={{ width: 40 }}
                 />
               )}
             </Box>
@@ -482,7 +529,10 @@ const Register = () => {
           {currentStep === 1 && (
             <Text className="text-gray-600 text-center mt-4">
               Don't have an account?{" "}
-              <Text className="text-blue-600 font-semibold" onPress={handleLoginPress}>
+              <Text
+                className="text-blue-600 font-semibold"
+                onPress={handleLoginPress}
+              >
                 Login
               </Text>
             </Text>

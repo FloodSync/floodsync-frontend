@@ -152,39 +152,53 @@ class NotificationService {
       // Request permissions
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
-        console.warn("Cannot register for push notifications: permission not granted");
+        console.warn(
+          "Cannot register for push notifications: permission not granted"
+        );
         return null;
       }
 
       // Get the Expo push token
       // Note: projectId is required for push notifications
-      // In Expo Go, push notifications are limited - use a development build for full support
+      // In EAS builds, projectId should be available from app.json
       let pushToken: string | null = null;
-      
-      // Get projectId from environment variable, Constants, or app.json
+
+      // Get projectId from multiple sources (EAS builds, environment, or app.json)
       const projectId =
         process.env.EXPO_PUBLIC_PROJECT_ID ||
         Constants.expoConfig?.extra?.eas?.projectId ||
         Constants.manifest?.extra?.eas?.projectId ||
-        undefined;
+        Constants.manifest2?.extra?.eas?.projectId ||
+        "57742b45-13a4-4d2c-bcbc-f402c43a91fa"; // Fallback to hardcoded value from app.json
+
+      console.log("Attempting to get push token with projectId:", projectId);
 
       try {
         const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: projectId || undefined, // Let Expo infer if not found
+          projectId: projectId,
         });
         pushToken = tokenData.data;
-        console.log("Push token obtained successfully, projectId:", projectId || "inferred from app.json");
+        console.log(
+          "✅ Push token obtained successfully:",
+          pushToken.substring(0, 20) + "..."
+        );
       } catch (error: any) {
+        console.error("❌ Error getting push token:", error.message || error);
         // Handle missing projectId error gracefully
-        if (error.message?.includes("projectId")) {
+        if (
+          error.message?.includes("projectId") ||
+          error.message?.includes("Project ID")
+        ) {
           console.warn(
-            "Push notifications require a projectId. " +
-            "Found in app.json: " + (projectId || "not found") + ". " +
-            "Push notifications are limited in Expo Go - use a development build for full support."
+            "⚠️ Push notifications require a projectId. " +
+              "Current projectId: " +
+              projectId +
+              ". " +
+              "If using Expo Go, push notifications are limited - use an EAS build for full support."
           );
-          // In Expo Go, we can't get push tokens, so return null
           return null;
         }
+        // Re-throw other errors
         throw error;
       }
 
@@ -198,11 +212,17 @@ class NotificationService {
           if (authToken) {
             // User is logged in - register with user account
             await notificationsApi.registerPushToken(authToken, pushToken);
-            console.log("Push token registered with backend (authenticated):", pushToken);
+            console.log(
+              "Push token registered with backend (authenticated):",
+              pushToken
+            );
           } else {
             // User is not logged in - register as anonymous device
             await notificationsApi.registerPushTokenUnauthenticated(pushToken);
-            console.log("Push token registered with backend (unauthenticated):", pushToken);
+            console.log(
+              "Push token registered with backend (unauthenticated):",
+              pushToken
+            );
           }
           this.registeredToken = pushToken;
         } catch (error) {

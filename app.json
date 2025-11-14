@@ -14,14 +14,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.kyawzinthant.floodsync",
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
+      "package": "com.kyawzinthant.floodsync",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -29,8 +29,12 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE"
-      ]
+        "VIBRATE",
+        "POST_NOTIFICATIONS",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "bundler": "metro",
@@ -46,9 +50,6 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#3B82F6",
-          "sounds": [
-            "./assets/sounds/notification.wav"
-          ],
           "mode": "production"
         }
       ]

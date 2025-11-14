@@ -27,7 +27,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 const LANGUAGE_STORAGE_KEY = "@floodsync:language";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("my"); // Default to Myanmar
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -36,6 +36,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       .then((savedLang) => {
         if (savedLang === "en" || savedLang === "my") {
           setLanguageState(savedLang as Language);
+        } else {
+          // If no saved preference, default to Myanmar
+          setLanguageState("my");
         }
         setIsReady(true);
       })

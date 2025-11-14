@@ -187,10 +187,20 @@ const Profile = () => {
         contentContainerStyle={{ padding: 10 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section - Simplified without profile photo */}
+        {/* Header Section - Enhanced Profile Icon */}
         <Box className="items-center mb-6">
-          <View className="w-20 h-20 bg-blue-100 rounded-full items-center justify-center mb-4">
-            <Ionicons name="person" size={32} color="#2563eb" />
+          <View
+            className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full items-center justify-center mb-4 shadow-lg"
+            style={{
+              backgroundColor: "#3B82F6",
+              shadowColor: "#3B82F6",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 6,
+              elevation: 8,
+            }}
+          >
+            <Ionicons name="person" size={40} color="#FFFFFF" />
           </View>
           <Heading className="text-blue-800 text-2xl font-bold">{name}</Heading>
           <Text className="text-gray-600 text-base mt-1">{user.email}</Text>
