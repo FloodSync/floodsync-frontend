@@ -176,6 +176,53 @@ export const translations = {
     // alert message
     alertMessage:
       "Monitor conditions closely. Avoid low-lying areas and be prepared for possible evacuation.",
+
+    // Resource Survey
+    resourceSurveyTitle: "Resource Needs Survey",
+    resourceSurveyMessage:
+      "What resources do you need? This helps us coordinate emergency assistance.",
+    resourceSurveySubtitle: "Select all that apply:",
+    submitResources: "Submit Resource Needs",
+    resourcesSubmitted: "Resource needs submitted successfully",
+    medicalKit: "Medical Kit",
+    foodAndWater: "Food & Water",
+    shelter: "Shelter",
+    clothing: "Clothing",
+    hygieneItems: "Hygiene Items",
+    babyCare: "Baby Care Items",
+    powerAndLighting: "Power & Lighting",
+    safetyAndRescueGear: "Safety & Rescue Gear",
+    selectAtLeastOne: "Please select at least one resource",
+
+    // Friends
+    friends: "Friends",
+    friendsAndFamily: "Friends & Family",
+    myFriends: "My Friends",
+    addFriend: "Add Friend",
+    searchFriends: "Search Friends",
+    searchByPhone: "Search by phone number",
+    noFriendsYet: "No friends yet",
+    noFriendsMessage: "Connect with friends and family to stay safe together",
+    friendRequests: "Friend Requests",
+    pendingRequests: "Pending Requests",
+    accept: "Accept",
+    reject: "Reject",
+    removeFriend: "Remove Friend",
+    removeFriendConfirm: "Are you sure you want to remove this friend?",
+    sendRequest: "Send Request",
+    requestSent: "Request sent",
+    friendAdded: "Friend added successfully",
+    friendRemoved: "Friend removed",
+    requestAccepted: "Request accepted",
+    requestRejected: "Request rejected",
+    unsafe: "Unsafe",
+    unknown: "Unknown",
+    lastSeen: "Last seen",
+    noRequests: "No pending requests",
+    searchUsers: "Search Users",
+    noUsersFound: "No users found",
+    alreadyFriends: "Already friends",
+    requestAlreadySent: "Request already sent",
   },
 
   my: {
@@ -370,6 +417,54 @@ export const translations = {
     // alert message
     alertMessage:
       "အခြေအနေများကို အနီးကပ်စောင့်ကြည့်ပါ။ နိမ့်ကျသောနေရာများကို ရှောင်ကြဉ်ပြီး ဖြစ်နိုင်ခြေရှိသော ဘေးလွတ်ရာသို့ ရွှေ့ပြောင်းရန် ပြင်ဆင်ထားပါ။",
+
+    // Resource Survey
+    resourceSurveyTitle: "လိုအပ်သော ပစ္စည်းများ စစ်တမ်း",
+    resourceSurveyMessage:
+      "သင်လိုအပ်သော ပစ္စည်းများကို ရွေးချယ်ပါ။ ဤအရာသည် အရေးပေါ်အကူအညီ ညှိနှိုင်းရာတွင် ကူညီပေးပါသည်။",
+    resourceSurveySubtitle: "အားလုံးကို ရွေးချယ်နိုင်ပါသည်:",
+    submitResources: "လိုအပ်သော ပစ္စည်းများ တင်သွင်းရန်",
+    resourcesSubmitted: "လိုအပ်သော ပစ္စည်းများ အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ",
+    medicalKit: "ဆေးဝါးကိရိယာအစုံ",
+    foodAndWater: "အစားအစာနှင့် ရေ",
+    shelter: "ခိုလှုံရာနေရာ",
+    clothing: "အဝတ်အစား",
+    hygieneItems: "သန့်ရှင်းရေး ပစ္စည်းများ",
+    babyCare: "ကလေးထိန်းသိမ်းရေး ပစ္စည်းများ",
+    powerAndLighting: "ဓာတ်အားနှင့် အလင်းရောင်",
+    safetyAndRescueGear: "ဘေးကင်းရေးနှင့် ကယ်ဆယ်ရေး ကိရိယာများ",
+    selectAtLeastOne: "အနည်းဆုံး ပစ္စည်းတစ်ခု ရွေးချယ်ပါ",
+
+    // Friends
+    friends: "မိတ်ဆွေများ",
+    friendsAndFamily: "မိတ်ဆွေနှင့် မိသားစု",
+    myFriends: "ကျွန်ုပ်၏ မိတ်ဆွေများ",
+    addFriend: "မိတ်ဆွေ ထည့်ရန်",
+    searchFriends: "မိတ်ဆွေများ ရှာဖွေရန်",
+    searchByPhone: "ဖုန်းနံပါတ်ဖြင့် ရှာဖွေရန်",
+    noFriendsYet: "အရှေ့တွင် မိတ်ဆွေ မရှိသေးပါ",
+    noFriendsMessage:
+      "မိတ်ဆွေနှင့် မိသားစုများနှင့် ချိတ်ဆက်ကာ အတူတူ ဘေးကင်းစွာ နေထိုင်ပါ",
+    friendRequests: "မိတ်ဆွေ တောင်းဆိုမှုများ",
+    pendingRequests: "စောင့်ဆိုင်းနေသော တောင်းဆိုမှုများ",
+    accept: "လက်ခံရန်",
+    reject: "ငြင်းဆိုရန်",
+    removeFriend: "မိတ်ဆွေ ဖယ်ရှားရန်",
+    removeFriendConfirm: "ဤမိတ်ဆွေကို ဖယ်ရှားလိုပါသလား?",
+    sendRequest: "တောင်းဆိုမှု ပို့ရန်",
+    requestSent: "တောင်းဆိုမှု ပို့ပြီးပါပြီ",
+    friendAdded: "မိတ်ဆွေ ထည့်သွင်းပြီးပါပြီ",
+    friendRemoved: "မိတ်ဆွေ ဖယ်ရှားပြီးပါပြီ",
+    requestAccepted: "တောင်းဆိုမှု လက်ခံပြီးပါပြီ",
+    requestRejected: "တောင်းဆိုမှု ငြင်းဆိုပြီးပါပြီ",
+    unsafe: "မဘေးကင်း",
+    unknown: "မသိရ",
+    lastSeen: "နောက်ဆုံး မြင်တွေ့ခဲ့သည့်",
+    noRequests: "စောင့်ဆိုင်းနေသော တောင်းဆိုမှု မရှိပါ",
+    searchUsers: "အသုံးပြုသူများ ရှာဖွေရန်",
+    noUsersFound: "အသုံးပြုသူ မတွေ့ရှိပါ",
+    alreadyFriends: "အရှေ့တွင် မိတ်ဆွေ ဖြစ်နေပါပြီ",
+    requestAlreadySent: "တောင်းဆိုမှု ပို့ပြီးသား ဖြစ်နေပါပြီ",
   },
 };
 

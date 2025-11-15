@@ -26,6 +26,21 @@ const _layout = () => {
       />
 
       <Stack.Screen name="account-created" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="profile"
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerBackVisible: true,
+          headerTitle: "",
+          headerTransparent: true,
+        }}
+      />
+      <Stack.Screen
+        name="friends"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 };

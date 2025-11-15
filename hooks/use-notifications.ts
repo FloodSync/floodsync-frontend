@@ -26,14 +26,24 @@ export const useNotifications = (page: number, limit: number = 20) => {
       if (!token || !isAuthenticated) {
         throw new Error("Not authenticated");
       }
-      const response = await notificationHistoryApi.getNotificationHistory(
-        token,
-        { page, limit }
-      );
-      if (response.notifications.length > 0) {
-        lastNotificationIdRef.current = response.notifications[0]._id;
+      try {
+        const response = await notificationHistoryApi.getNotificationHistory(
+          token,
+          { page, limit }
+        );
+        console.log("useNotifications - response received:", {
+          success: response.success,
+          notificationsCount: response.notifications?.length || 0,
+          pagination: response.pagination,
+        });
+        if (response.notifications && response.notifications.length > 0) {
+          lastNotificationIdRef.current = response.notifications[0]._id;
+        }
+        return response;
+      } catch (error: any) {
+        console.error("useNotifications - error fetching:", error);
+        throw error;
       }
-      return response;
     },
     enabled: isAuthenticated && !!token,
     retry: 2,
@@ -165,6 +175,17 @@ export const useNotifications = (page: number, limit: number = 20) => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
+
+  // Log the final data being returned
+  useEffect(() => {
+    if (notificationsData) {
+      console.log("useNotifications - final notifications data:", {
+        notificationsCount: notificationsData.notifications?.length || 0,
+        hasPagination: !!notificationsData.pagination,
+        unreadCount: unreadData?.unreadCount || 0,
+      });
+    }
+  }, [notificationsData, unreadData]);
 
   return {
     notifications: notificationsData?.notifications || [],

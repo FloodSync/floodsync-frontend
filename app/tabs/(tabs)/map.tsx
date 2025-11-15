@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
 import {
   Text,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   View,
+  PanResponder,
 } from "react-native";
 import { Box } from "@/components/ui/box";
 import { Heading } from "@/components/ui/heading";
@@ -21,6 +22,13 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MapScreen = () => {
   const webViewRef = useRef<any>(null);
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+  // Draggable panel state
+  const minHeight = SCREEN_HEIGHT * 0.2; // 20% minimum
+  const maxHeight = SCREEN_HEIGHT * 0.8; // 80% maximum
+  const initialHeight = SCREEN_HEIGHT * 0.5; // 50% initial
+  const panelHeight = useRef(new Animated.Value(initialHeight)).current;
+  const [panelHeightValue, setPanelHeightValue] = useState(initialHeight);
 
   const {
     data: floodingData,
@@ -56,6 +64,64 @@ const MapScreen = () => {
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
+
+  // Pan responder for dragging the panel
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to vertical drags
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderGrant: () => {
+        panelHeight.setOffset(panelHeightValue);
+        panelHeight.setValue(0);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Smooth real-time dragging without clamping during move
+        const newHeight = panelHeightValue - gestureState.dy;
+        panelHeight.setValue(newHeight - panelHeightValue);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        panelHeight.flattenOffset();
+        const newHeight = panelHeightValue - gestureState.dy;
+        let finalHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+        
+        // Snap to nearest snap point if close
+        const snapPoints = [
+          SCREEN_HEIGHT * 0.2,  // 20%
+          SCREEN_HEIGHT * 0.4,  // 40%
+          SCREEN_HEIGHT * 0.5,  // 50%
+          SCREEN_HEIGHT * 0.6,  // 60%
+          SCREEN_HEIGHT * 0.8,  // 80%
+        ];
+        
+        const snapThreshold = 50;
+        const closestSnap = snapPoints.reduce((prev, curr) =>
+          Math.abs(curr - finalHeight) < Math.abs(prev - finalHeight) ? curr : prev
+        );
+        
+        if (Math.abs(closestSnap - finalHeight) < snapThreshold) {
+          finalHeight = closestSnap;
+        } else {
+          // Clamp to min/max if not snapping
+          finalHeight = Math.max(minHeight, Math.min(maxHeight, finalHeight));
+        }
+        
+        Animated.spring(panelHeight, {
+          toValue: finalHeight,
+          useNativeDriver: false,
+          tension: 80,
+          friction: 8,
+          velocity: gestureState.vy || 0,
+        }).start(() => {
+          setPanelHeightValue(finalHeight);
+        });
+        
+        setPanelHeightValue(finalHeight);
+      },
+    })
+  ).current;
 
   const cities = useMemo(() => {
     if (!floodingData?.data) return [];
@@ -839,9 +905,16 @@ const MapScreen = () => {
     );
   }
 
+  // Calculate map height based on panel height
+  const mapHeight = panelHeight.interpolate({
+    inputRange: [minHeight, maxHeight],
+    outputRange: [SCREEN_HEIGHT - minHeight, SCREEN_HEIGHT - maxHeight],
+    extrapolate: 'clamp',
+  });
+
   return (
     <SafeAreaView className="flex-1 bg-blue-50" edges={["top", "bottom"]}>
-      <View style={{ flex: 1 }}>
+      <Animated.View style={{ height: mapHeight, overflow: 'hidden' }}>
         <WebView
           ref={webViewRef}
           originWhitelist={["*"]}
@@ -849,28 +922,50 @@ const MapScreen = () => {
           style={{ flex: 1 }}
           onLoadEnd={injectCitiesData}
         />
-      </View>
+      </Animated.View>
 
-      <View
+      <Animated.View
         style={{
           position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
-          height: SCREEN_HEIGHT * 0.5,
+          height: panelHeight,
           backgroundColor: "white",
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 10,
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          elevation: 15,
           zIndex: 1000,
+          overflow: 'hidden',
         }}
       >
+        {/* Drag Handle */}
+        <View
+          {...panResponder.panHandlers}
+          style={{
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: 8,
+            paddingBottom: 4,
+          }}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 4,
+              backgroundColor: "#CBD5E1",
+              borderRadius: 2,
+            }}
+          />
+        </View>
+
         <View style={{ flex: 1 }}>
-          <Box className="px-4 pt-4 pb-3">
+          <Box className="px-4 pt-2 pb-3">
             <Box className="flex-row items-center justify-between">
               <Heading className="text-lg font-semibold text-gray-800">
                 Flood Risk Areas
@@ -963,7 +1058,7 @@ const MapScreen = () => {
             )}
           </ScrollView>
         </View>
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };

@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { notificationsApi } from "@/lib/api/notifications";
+import { notificationHistoryApi } from "@/lib/api/notification-history";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -66,7 +67,8 @@ class NotificationService {
     floodRisk: number,
     location: string,
     title?: string,
-    body?: string
+    body?: string,
+    authToken?: string
   ): Promise<void> {
     if (floodRisk <= 70) {
       this.lastNotifiedRisk = null;
@@ -111,6 +113,25 @@ class NotificationService {
         content: notificationContent,
         trigger: null, // Send immediately
       });
+
+      // Save notification to backend if user is authenticated
+      if (authToken) {
+        try {
+          await notificationHistoryApi.createNotification(authToken, {
+            title: notificationTitle,
+            body: notificationBody,
+            type: "flood_alert",
+            data: {
+              floodRisk: floodRisk.toString(),
+              location,
+            },
+          });
+          console.log("Notification saved to backend history");
+        } catch (error) {
+          console.error("Failed to save notification to backend:", error);
+          // Don't fail the whole operation if backend save fails
+        }
+      }
 
       this.lastNotifiedRisk = floodRisk;
       console.log("Flood alert notification sent:", { floodRisk, location });

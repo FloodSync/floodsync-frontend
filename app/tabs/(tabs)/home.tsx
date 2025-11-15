@@ -36,6 +36,8 @@ import {
 } from "@/lib/config/app-config";
 import { myanmarCities, myanmarTownships } from "@/lib/data/myanmar-locations";
 import FloodSafetyCheck from "@/components/flood-safety-check";
+import ResourceSurvey from "@/components/resource-survey";
+import { ResourceType } from "@/lib/api/resources";
 
 const getWeatherCondition = (code: number, isDay: number): string => {
   if (code === 0) return isDay ? "Clear Sky" : "Clear Night";
@@ -230,6 +232,11 @@ export default function HomeScreen() {
     // You can add additional logic here if needed
   }, []);
 
+  const handleResourcesSubmitted = useCallback((resources: ResourceType[]) => {
+    console.log("User resource needs submitted:", resources);
+    // You can add additional logic here if needed
+  }, []);
+
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -391,6 +398,12 @@ export default function HomeScreen() {
           floodRisk={floodRisk}
           location={userLocation}
           onResponseSubmitted={handleSafetyResponse}
+        />
+
+        <ResourceSurvey
+          floodRisk={floodRisk}
+          location={userLocation}
+          onResourcesSubmitted={handleResourcesSubmitted}
         />
 
         <Box className="bg-white px-4 mx-4 mt-2 rounded-xl py-4">

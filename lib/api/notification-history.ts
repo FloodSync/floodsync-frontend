@@ -88,13 +88,18 @@ export const notificationHistoryApi = {
     const queryString = queryParams.toString();
     const endpoint = `/notifications${queryString ? `?${queryString}` : ""}`;
 
-    return apiClient.authenticatedRequest<NotificationHistoryResponse>(
-      endpoint,
-      token,
-      {
-        method: "GET",
-      }
-    );
+    const response =
+      await apiClient.authenticatedRequest<NotificationHistoryResponse>(
+        endpoint,
+        token,
+        {
+          method: "GET",
+        }
+      );
+    console.log("notification history response", response);
+    console.log("notifications array:", response.notifications);
+    console.log("notifications count:", response.notifications?.length || 0);
+    return response;
   },
 
   getUnreadCount: async (token: string): Promise<UnreadCountResponse> => {
@@ -165,5 +170,23 @@ export const notificationHistoryApi = {
         method: "GET",
       }
     );
+  },
+
+  createNotification: async (
+    token: string,
+    notification: {
+      title: string;
+      body: string;
+      type: "flood_alert" | "test" | "general" | "system";
+      data?: NotificationData;
+    }
+  ): Promise<{ success: boolean; notification: Notification }> => {
+    return apiClient.authenticatedRequest<{
+      success: boolean;
+      notification: Notification;
+    }>("/notifications", token, {
+      method: "POST",
+      body: JSON.stringify(notification),
+    });
   },
 };

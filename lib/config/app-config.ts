@@ -24,7 +24,7 @@ export const APP_CONFIG = {
       next24HoursForecast: 3.2,
     },
 
-    location: "Yangon, Hlaing",
+    location: "Yangon, Ahlone",
   },
 };
 

@@ -14,6 +14,7 @@ import { Heading } from "@/components/ui/heading";
 import { SelectList } from "react-native-dropdown-select-list";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Users } from "lucide-react-native";
 import { useAuthStore } from "@/stores/auth-store";
 import { useUpdateUser, useCurrentUser } from "@/hooks/use-auth";
 import { useLogout } from "@/hooks/use-auth";
@@ -350,6 +351,36 @@ const Profile = () => {
               )}
             </TouchableOpacity>
           )}
+        </Box>
+
+        {/* Friends & Family Section */}
+        <Box className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+          <Heading className="text-xl font-bold text-gray-800 mb-4">
+            Friends & Family
+          </Heading>
+
+          <TouchableOpacity
+            onPress={() => router.push("/(auth)/friends")}
+            className="flex-row items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200"
+          >
+            <Box className="flex-row items-center">
+              <View
+                className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                style={{ backgroundColor: "#3B82F6" }}
+              >
+                <Users size={20} color="#FFFFFF" />
+              </View>
+              <Box>
+                <Text className="text-gray-900 font-semibold text-base">
+                  Manage Friends
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  Connect with friends and family
+                </Text>
+              </Box>
+            </Box>
+            <Ionicons name="chevron-forward" size={20} color="#3B82F6" />
+          </TouchableOpacity>
         </Box>
 
         {/* Account Actions Section */}

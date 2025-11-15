@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { notificationService } from "@/lib/notifications/notification-service";
 import * as Notifications from "expo-notifications";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface UseFloodNotificationsProps {
   floodRisk: number;
@@ -15,6 +16,7 @@ export const useFloodNotifications = ({
   enabled = true,
 }: UseFloodNotificationsProps) => {
   const { t } = useLanguage();
+  const { token } = useAuthStore();
   const lastNotifiedRiskRef = useRef<number | null>(null);
   const notificationListenerRef =
     useRef<Notifications.EventSubscription | null>(null);
@@ -64,7 +66,8 @@ export const useFloodNotifications = ({
           floodRisk,
           location,
           title,
-          body
+          body,
+          token || undefined
         );
         lastNotifiedRiskRef.current = floodRisk;
       }

@@ -137,109 +137,144 @@ export default function NotiScreen() {
             )}
           </Box>
         ) : notifications.length === 0 ? (
-          <Box className="flex-1 items-center justify-center py-12">
+          <ScrollView
+            className="flex-1"
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={() => {
+                  console.log("Pull to refresh triggered (empty state)");
+                  refetch();
+                }}
+                tintColor="#3B82F6"
+                colors={["#3B82F6"]}
+              />
+            }
+            contentContainerStyle={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 48,
+            }}
+          >
             <Bell size={64} color="#9CA3AF" />
             <Text className="text-gray-500 text-lg mt-4 font-semibold">
               No notifications
             </Text>
-            <Text className="text-gray-400 text-sm mt-2 text-center">
-              You're all caught up!
+            <Text className="text-gray-400 text-sm mt-2 text-center px-4">
+              You're all caught up! Pull down to refresh.
             </Text>
-          </Box>
+          </ScrollView>
         ) : (
           <ScrollView
             className="flex-1"
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
-                onRefresh={refetch}
+                onRefresh={() => {
+                  console.log("Pull to refresh triggered");
+                  refetch();
+                }}
                 tintColor="#3B82F6"
+                colors={["#3B82F6"]}
               />
             }
           >
             <Box className="px-4 py-6">
-              <VStack space="md">
-                {notifications.map((notification) => {
-                  const style = getNotificationStyle(notification.type);
-                  const IconComponent = style.icon;
+              {notifications.length === 0 ? (
+                <Box className="items-center justify-center py-12">
+                  <Bell size={64} color="#9CA3AF" />
+                  <Text className="text-gray-500 text-lg mt-4 font-semibold">
+                    No notifications
+                  </Text>
+                  <Text className="text-gray-400 text-sm mt-2 text-center">
+                    Pull down to refresh
+                  </Text>
+                </Box>
+              ) : (
+                <VStack space="md">
+                  {notifications.map((notification) => {
+                    const style = getNotificationStyle(notification.type);
+                    const IconComponent = style.icon;
 
-                  return (
-                    <TouchableOpacity
-                      key={notification._id}
-                      onPress={() => handleNotificationPress(notification)}
-                      activeOpacity={0.7}
-                    >
-                      <Card
-                        className={`bg-white rounded-xl p-4 shadow-md border-l-4 ${
-                          !notification.read ? "border-l-4" : "opacity-75"
-                        }`}
-                        style={{ borderLeftColor: style.color }}
+                    return (
+                      <TouchableOpacity
+                        key={notification._id}
+                        onPress={() => handleNotificationPress(notification)}
+                        activeOpacity={0.7}
                       >
-                        <HStack space="md" className="items-start">
-                          <Box
-                            className={`${style.bgColor} rounded-full p-2`}
-                            style={{ opacity: notification.read ? 0.6 : 1 }}
-                          >
-                            <IconComponent size={24} color={style.color} />
-                          </Box>
-                          <VStack className="flex-1">
-                            <HStack className="items-start justify-between">
-                              <VStack className="flex-1">
-                                <Text
-                                  className={`text-gray-900 font-semibold text-base ${
-                                    !notification.read ? "" : "opacity-60"
-                                  }`}
+                        <Card
+                          className={`bg-white rounded-xl p-4 shadow-md border-l-4 ${
+                            !notification.read ? "border-l-4" : "opacity-75"
+                          }`}
+                          style={{ borderLeftColor: style.color }}
+                        >
+                          <HStack space="md" className="items-start">
+                            <Box
+                              className={`${style.bgColor} rounded-full p-2`}
+                              style={{ opacity: notification.read ? 0.6 : 1 }}
+                            >
+                              <IconComponent size={24} color={style.color} />
+                            </Box>
+                            <VStack className="flex-1">
+                              <HStack className="items-start justify-between">
+                                <VStack className="flex-1">
+                                  <Text
+                                    className={`text-gray-900 font-semibold text-base ${
+                                      !notification.read ? "" : "opacity-60"
+                                    }`}
+                                  >
+                                    {notification.title}
+                                  </Text>
+                                  <Text
+                                    className={`text-gray-600 text-sm mt-1 ${
+                                      !notification.read ? "" : "opacity-60"
+                                    }`}
+                                  >
+                                    {notification.body}
+                                  </Text>
+                                  {notification.data?.city &&
+                                    notification.data?.township && (
+                                      <Text className="text-gray-500 text-xs mt-1">
+                                        {notification.data.city},{" "}
+                                        {notification.data.township}
+                                      </Text>
+                                    )}
+                                  <Text className="text-blue-500 text-xs mt-2">
+                                    {formatTime(
+                                      notification.sentAt ||
+                                        notification.createdAt
+                                    )}
+                                  </Text>
+                                </VStack>
+                                <TouchableOpacity
+                                  onPress={() => handleDelete(notification._id)}
+                                  className="ml-2 p-2"
+                                  hitSlop={{
+                                    top: 10,
+                                    bottom: 10,
+                                    left: 10,
+                                    right: 10,
+                                  }}
                                 >
-                                  {notification.title}
-                                </Text>
-                                <Text
-                                  className={`text-gray-600 text-sm mt-1 ${
-                                    !notification.read ? "" : "opacity-60"
-                                  }`}
-                                >
-                                  {notification.body}
-                                </Text>
-                                {notification.data?.city &&
-                                  notification.data?.township && (
-                                    <Text className="text-gray-500 text-xs mt-1">
-                                      {notification.data.city},{" "}
-                                      {notification.data.township}
-                                    </Text>
-                                  )}
-                                <Text className="text-blue-500 text-xs mt-2">
-                                  {formatTime(
-                                    notification.sentAt ||
-                                      notification.createdAt
-                                  )}
-                                </Text>
-                              </VStack>
-                              <TouchableOpacity
-                                onPress={() => handleDelete(notification._id)}
-                                className="ml-2 p-2"
-                                hitSlop={{
-                                  top: 10,
-                                  bottom: 10,
-                                  left: 10,
-                                  right: 10,
-                                }}
-                              >
-                                <Trash2 size={18} color="#EF4444" />
-                              </TouchableOpacity>
-                            </HStack>
-                            {!notification.read && (
-                              <Box className="mt-2 self-start bg-blue-100 rounded-full px-2 py-1">
-                                <Text className="text-blue-600 text-xs font-semibold">
-                                  New
-                                </Text>
-                              </Box>
-                            )}
-                          </VStack>
-                        </HStack>
-                      </Card>
-                    </TouchableOpacity>
-                  );
-                })}
-              </VStack>
+                                  <Trash2 size={18} color="#EF4444" />
+                                </TouchableOpacity>
+                              </HStack>
+                              {!notification.read && (
+                                <Box className="mt-2 self-start bg-blue-100 rounded-full px-2 py-1">
+                                  <Text className="text-blue-600 text-xs font-semibold">
+                                    New
+                                  </Text>
+                                </Box>
+                              )}
+                            </VStack>
+                          </HStack>
+                        </Card>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </VStack>
+              )}
 
               {/* Pagination */}
               {pagination && pagination.totalPages > 1 && (
